@@ -3,7 +3,7 @@ Fortuneer is a personal finance app that helps you strategically manage your mon
 > **Pioneer Your Wealth.**
 > Fortuneer is a personal finance app that helps you strategically manage your money and reach financial freedom.
 
-![Fortuneer Logo](./assets/brand/fortuneer-logo.svg)
+![Fortuneer Logo](./assets/brand/fortuneer-logo-v3.svg)
 
 ---
 
@@ -189,6 +189,56 @@ Fortuneer's visual identity is built around **deep indigo** and **amber gold** �
 - [ ] AI financial agent
 - [ ] MCP integration
 - [ ] Proactive alerts and recommendations
+
+---
+
+## Development Workflow
+
+### Branch Structure
+- `main` — production, auto-deploys to Vercel
+- `dev` — staging, Vercel preview deployment
+- `feature/*` — individual features, branch off `dev`
+- `fix/*` — bug fixes, branch off `dev`
+- `hotfix/*` — urgent production fixes, branch off `main`
+
+### Branch Naming Scheme
+| Type | Pattern | Example |
+|---|---|---|
+| Feature | `feature/{issue-number}-{description}` | `feature/7-plaid-link-flow` |
+| Bug Fix | `fix/{issue-number}-{description}` | `fix/12-auth-redirect-loop` |
+| Hotfix | `hotfix/{description}` | `hotfix/broken-plaid-token` |
+| Release | `release/v{version}` | `release/v1.0.0` |
+
+### Flow
+1. Pick an issue → create branch directly from the issue page on GitHub (`feature/{n}-{description}` off `dev`)
+2. Build and test locally
+3. PR into `dev` with `closes #{issue-number}` in the commit message → automatically closes issue on merge → Vercel preview URL generated
+4. When all issues in a milestone are closed → PR `dev` into `main` → production release
+5. Tag the release: `git tag v1.0.0 && git push origin v1.0.0`
+
+### GitHub Project Tracking
+Everything is connected through issues — no manual linking of branches to projects or milestones needed:
+
+```
+Project Board (Fortuneer MVP)
+    └── Milestone (e.g. Auth, Bank Integration)
+            └── Issue (#1 Setup Supabase Auth)
+                    └── Branch (feature/1-setup-supabase-auth)
+                            └── PR → closes #1 → milestone progress updates → board updates
+```
+
+- **Issues → Milestones** — assign on creation
+- **Issues → Project Board** — add to Fortuneer MVP board
+- **Branches → Issues** — create branch from issue page, reference with `closes #n`
+- **Milestones → Project** — implicit through issues, no direct link needed
+
+### Environments
+| Branch | Plaid | Supabase |
+|---|---|---|
+| `dev` / `feature/*` | Sandbox | Dev project |
+| `main` | Production | Prod project |
+
+
 
 ---
 
