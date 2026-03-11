@@ -125,7 +125,7 @@ Fortuneer's visual identity is built around **deep indigo** and **amber gold** â
 
 | Asset | File |
 |---|---|
-| Logo (Icon + Wordmark) | `assets/brand/fortuneer-logo-v3.svg` |
+| Logo (Icon + Wordmark) | `assets/brand/fortuneer-logo.svg` |
 | App Icon | `assets/brand/fortuneer-icon.svg` |
 | Brand Style Guide | `assets/brand/fortuneer-brand-guide.html` |
 
