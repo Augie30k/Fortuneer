@@ -1,8 +1,5 @@
-# Fortuneer
-Fortuneer is a personal finance app that helps you strategically manage your money and reach financial freedom.
-
 # FORTUNEER
-
+Fortuneer is a personal finance app that helps you strategically manage your money and reach financial freedom.
 > **Pioneer Your Wealth.**
 > Fortuneer is a personal finance app that helps you strategically manage your money and reach financial freedom.
 
@@ -18,19 +15,31 @@ Fortuneer is a smart personal finance platform built for people who are serious 
 
 ---
 
+## Platform
+
+| Platform | Status |
+|---|---|
+| 🖥️ Desktop Web | v1 — In Development |
+| 📱 Mobile Web | v1 — In Development |
+| 📲 iOS / Android App | v2 — Planned (Expo) |
+
+---
+
 ## Features
 
-### v1 — MVP
+### v1 — MVP (Desktop + Mobile Web)
+- 🔐 **Secure Auth** — Supabase-powered authentication
 - 🔗 **Bank Integration** — Connect accounts via Plaid
 - 📊 **Transaction History** — Full transaction feed with categorization
-- 🔐 **Secure Auth** — Supabase-powered authentication
+- 🏠 **Dashboard** — Account balances and spending overview
 
-### v2 — Coming Soon
+### v2 — Mobile App + Growth
+- 📲 **Native iOS & Android App** — Expo (React Native), Turborepo monorepo
 - 💡 **Smart Insights** — Spending patterns and anomaly detection
 - 🎯 **Goal Setting** — Set and track financial milestones
 - 📈 **Net Worth Tracking** — Assets, liabilities, full picture
 
-### v3 — Future
+### v3 — AI Layer
 - 🤖 **AI Financial Agent** — Natural language queries, personalized strategy
 - 🔌 **MCP Integration** — Model Context Protocol for extensible AI tooling
 - 📬 **Proactive Alerts** — Agent-driven nudges and recommendations
@@ -48,12 +57,14 @@ Fortuneer is a smart personal finance platform built for people who are serious 
 | Auth | Supabase Auth |
 | Bank Integration | Plaid API |
 | Deployment | Vercel |
-| AI (Planned) | Vercel AI SDK, Anthropic / OpenAI APIs |
+| Mobile App (v2) | Expo (React Native), Turborepo monorepo |
+| AI (v3) | Vercel AI SDK, Anthropic / OpenAI APIs, MCP |
 
 ---
 
 ## Project Structure
 
+### v1 — Current
 ```
 fortuneer/
 ├── app/                  # Next.js App Router
@@ -67,6 +78,18 @@ fortuneer/
 ├── assets/
 │   └── brand/            # Logo SVGs, brand guide
 └── public/               # Static assets
+```
+
+### v2 — Turborepo Monorepo (Web + Mobile)
+```
+fortuneer/
+├── apps/
+│   ├── web/              # Next.js (migrated from v1)
+│   └── mobile/           # Expo (React Native)
+└── packages/
+    ├── ui/               # Shared components
+    ├── types/            # Shared TypeScript types
+    └── lib/              # Shared Supabase + Plaid clients
 ```
 
 ---
@@ -125,7 +148,7 @@ Fortuneer's visual identity is built around **deep indigo** and **amber gold** �
 
 | Asset | File |
 |---|---|
-| Logo (Icon + Wordmark) | `assets/brand/fortuneer-logo.svg` |
+| Logo (Icon + Wordmark) | `assets/brand/fortuneer-logo-v3.svg` |
 | App Icon | `assets/brand/fortuneer-icon.svg` |
 | Brand Style Guide | `assets/brand/fortuneer-brand-guide.html` |
 
@@ -143,15 +166,29 @@ Fortuneer's visual identity is built around **deep indigo** and **amber gold** �
 
 ## Roadmap
 
+**v1 — MVP (Desktop + Mobile Web)**
 - [x] Project setup & brand identity
 - [ ] Supabase auth (sign up, login, session)
 - [ ] Plaid Link integration
-- [ ] Transaction history feed
-- [ ] Dashboard UI
+- [ ] Store user Plaid access tokens in Supabase
+- [ ] Fetch and store transaction history
+- [ ] Transaction feed UI
 - [ ] Spending categorization
-- [ ] Goal tracking
-- [ ] AI insights layer
-- [ ] MCP agent integration
+- [ ] Dashboard UI (balances + spending overview)
+- [ ] Responsive design (mobile web)
+- [ ] Vercel deployment
+
+**v2 — Mobile App + Growth**
+- [ ] Migrate to Turborepo monorepo
+- [ ] Expo mobile app (iOS + Android)
+- [ ] Smart spending insights
+- [ ] Goal setting and tracking
+- [ ] Net worth tracking
+
+**v3 — AI Layer**
+- [ ] AI financial agent
+- [ ] MCP integration
+- [ ] Proactive alerts and recommendations
 
 ---
 
