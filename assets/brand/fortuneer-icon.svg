@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="iconFillApp" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#6D28D9;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#A78BFA;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="accentGoldApp" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FCD34D;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D97706;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="bgApp" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#07071A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0F0B2A;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glowApp">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background square with rounded corners -->
+  <rect width="512" height="512" fill="url(#bgApp)" rx="110"/>
+
+  <!-- Outer ring -->
+  <circle cx="256" cy="256" r="200" fill="none" stroke="url(#accentGoldApp)" stroke-width="3" stroke-opacity="0.25"/>
+  <circle cx="256" cy="256" r="185" fill="#0D0B28"/>
+  <circle cx="256" cy="256" r="185" fill="none" stroke="#6D28D9" stroke-width="1.5" stroke-opacity="0.3"/>
+
+  <!-- Rising bars - strict left to right upward growth -->
+  <rect x="138" y="330" width="44" height="36" rx="10" fill="url(#iconFillApp)" opacity="0.5"/>
+  <rect x="198" y="290" width="44" height="76" rx="10" fill="url(#iconFillApp)" opacity="0.65"/>
+  <rect x="258" y="240" width="44" height="126" rx="10" fill="url(#iconFillApp)" opacity="0.82"/>
+  <rect x="318" y="174" width="44" height="192" rx="10" fill="url(#iconFillApp)"/>
+
+  <!-- Gold arrow above tallest bar (rightmost) -->
+  <polygon points="340,148 366,180 314,180" fill="url(#accentGoldApp)" filter="url(#glowApp)"/>
+</svg>

@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fortuneer — Brand Style Guide</title>
+  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #07071A;
+      --bg2: #0D0B28;
+      --bg3: #12103A;
+      --indigo: #6D28D9;
+      --indigo-light: #A78BFA;
+      --gold: #FCD34D;
+      --gold-dark: #D97706;
+      --text: #EEE8F5;
+      --text-muted: #8B8BA8;
+      --border: rgba(255,255,255,0.07);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 60px 32px;
+    }
+
+    /* Header */
+    .header {
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 48px;
+      margin-bottom: 64px;
+    }
+
+    .brand-name {
+      font-family: 'EB Garamond', serif;
+      font-size: 56px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      line-height: 1;
+      margin-bottom: 8px;
+    }
+
+    .brand-name span { color: var(--gold); }
+
+    .tagline {
+      letter-spacing: 8px;
+      font-size: 11px;
+      color: var(--indigo-light);
+      text-transform: uppercase;
+      margin-top: 12px;
+    }
+
+    .version {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    /* Sections */
+    .section {
+      margin-bottom: 64px;
+    }
+
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 6px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Colors */
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 16px;
+    }
+
+    .color-card {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+    }
+
+    .color-swatch {
+      height: 80px;
+    }
+
+    .color-info {
+      padding: 12px;
+      background: var(--bg2);
+    }
+
+    .color-name {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .color-hex {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-family: monospace;
+    }
+
+    .color-role {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    /* Typography */
+    .type-row {
+      padding: 24px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .type-row:last-child { border-bottom: none; }
+
+    .type-label {
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .type-display {
+      font-family: 'EB Garamond', serif;
+      font-size: 48px;
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.1;
+    }
+
+    .type-heading {
+      font-family: 'EB Garamond', serif;
+      font-size: 28px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .type-body {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+
+    .type-caption {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: var(--indigo-light);
+    }
+
+    .type-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-family: monospace;
+    }
+
+    /* Logo usage */
+    .logo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .logo-card {
+      border-radius: 12px;
+      padding: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border);
+      min-height: 120px;
+    }
+
+    .logo-card.dark { background: var(--bg2); }
+    .logo-card.light { background: #F5F0E8; }
+
+    .logo-text-dark {
+      font-family: 'EB Garamond', serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: #EEE8F5;
+    }
+
+    .logo-text-dark span { color: var(--gold); }
+
+    .logo-text-light {
+      font-family: 'EB Garamond', serif;
+      font-size: 28px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      color: #07071A;
+    }
+
+    .logo-text-light span { color: var(--indigo); }
+
+    .logo-label {
+      font-size: 10px;
+      letter-spacing: 4px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    /* Voice */
+    .voice-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .voice-card {
+      background: var(--bg2);
+      border-radius: 12px;
+      padding: 24px;
+      border: 1px solid var(--border);
+    }
+
+    .voice-card h4 {
+      font-size: 12px;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .voice-card h4.yes { color: var(--gold); }
+    .voice-card h4.no { color: #EF4444; }
+
+    .voice-card ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .voice-card ul li {
+      font-size: 13px;
+      color: var(--text-muted);
+      padding: 5px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .voice-card ul li:last-child { border-bottom: none; }
+
+    /* Spacing */
+    .spacing-row {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .spacing-block {
+      background: var(--indigo);
+      opacity: 0.6;
+      height: 16px;
+      border-radius: 3px;
+    }
+
+    .spacing-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: monospace;
+      min-width: 80px;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 80px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="brand-name">FORT<span>UNEER</span></div>
+      <div class="tagline">Pioneer Your Wealth</div>
+      <div class="version">Brand Style Guide — v1.0</div>
+    </div>
+
+    <!-- Colors -->
+    <div class="section">
+      <div class="section-label">Color System</div>
+      <div class="color-grid">
+        <div class="color-card">
+          <div class="color-swatch" style="background:#FCD34D;"></div>
+          <div class="color-info">
+            <div class="color-name">Gold</div>
+            <div class="color-hex">#FCD34D</div>
+            <div class="color-role">Primary Accent</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#D97706;"></div>
+          <div class="color-info">
+            <div class="color-name">Gold Dark</div>
+            <div class="color-hex">#D97706</div>
+            <div class="color-role">Gradient End / Hover</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#6D28D9;"></div>
+          <div class="color-info">
+            <div class="color-name">Indigo</div>
+            <div class="color-hex">#6D28D9</div>
+            <div class="color-role">Secondary Accent</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#A78BFA;"></div>
+          <div class="color-info">
+            <div class="color-name">Indigo Light</div>
+            <div class="color-hex">#A78BFA</div>
+            <div class="color-role">Taglines / Labels</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#07071A;"></div>
+          <div class="color-info">
+            <div class="color-name">Obsidian</div>
+            <div class="color-hex">#07071A</div>
+            <div class="color-role">Background Primary</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#0D0B28;"></div>
+          <div class="color-info">
+            <div class="color-name">Deep Indigo</div>
+            <div class="color-hex">#0D0B28</div>
+            <div class="color-role">Background Secondary</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#EEE8F5;"></div>
+          <div class="color-info">
+            <div class="color-name">Frost</div>
+            <div class="color-hex">#EEE8F5</div>
+            <div class="color-role">Primary Text</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#8B8BA8;"></div>
+          <div class="color-info">
+            <div class="color-name">Slate</div>
+            <div class="color-hex">#8B8BA8</div>
+            <div class="color-role">Muted Text</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Typography -->
+    <div class="section">
+      <div class="section-label">Typography</div>
+
+      <div class="type-row">
+        <div class="type-label">Display — Wordmark & Heroes</div>
+        <div class="type-display">FORTUNEER</div>
+        <div class="type-meta">EB Garamond · 700 · Letter-spacing: 4px</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-label">Heading</div>
+        <div class="type-heading">Pioneer Your Wealth</div>
+        <div class="type-meta">EB Garamond · 500 · 28px</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-label">Body</div>
+        <div class="type-body">Take control of your finances with clarity, strategy, and purpose. Fortuneer helps you see the full picture.</div>
+        <div class="type-meta">DM Sans · 400 · 16px</div>
+      </div>
+
+      <div class="type-row">
+        <div class="type-label">Caption / Label</div>
+        <div class="type-caption">Pioneer Your Wealth</div>
+        <div class="type-meta">DM Sans · 400 · 11px · Letter-spacing: 5px · Uppercase</div>
+      </div>
+    </div>
+
+    <!-- Logo Usage -->
+    <div class="section">
+      <div class="section-label">Logo Usage</div>
+      <div class="logo-grid">
+        <div>
+          <div class="logo-card dark">
+            <div class="logo-text-dark">FORT<span>UNEER</span></div>
+          </div>
+          <div class="logo-label">Dark Background — Preferred</div>
+        </div>
+        <div>
+          <div class="logo-card light">
+            <div class="logo-text-light">FORT<span>UNEER</span></div>
+          </div>
+          <div class="logo-label">Light Background</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Brand Voice -->
+    <div class="section">
+      <div class="section-label">Brand Voice</div>
+      <div class="voice-grid">
+        <div class="voice-card">
+          <h4 class="yes">✦ We Are</h4>
+          <ul>
+            <li>Confident & direct</li>
+            <li>Strategic & intelligent</li>
+            <li>Empowering, not preachy</li>
+            <li>Premium but accessible</li>
+            <li>Forward-looking</li>
+          </ul>
+        </div>
+        <div class="voice-card">
+          <h4 class="no">✕ We Are Not</h4>
+          <ul>
+            <li>Condescending or jargon-heavy</li>
+            <li>Overly casual or gimmicky</li>
+            <li>Fear-based ("You're behind!")</li>
+            <li>Generic or corporate</li>
+            <li>Reactive or short-term focused</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Spacing -->
+    <div class="section">
+      <div class="section-label">Spacing Scale</div>
+      <div class="spacing-row">
+        <div class="spacing-label">4px — xs</div>
+        <div class="spacing-block" style="width:4px;"></div>
+      </div>
+      <div class="spacing-row">
+        <div class="spacing-label">8px — sm</div>
+        <div class="spacing-block" style="width:8px;"></div>
+      </div>
+      <div class="spacing-row">
+        <div class="spacing-label">16px — md</div>
+        <div class="spacing-block" style="width:16px;"></div>
+      </div>
+      <div class="spacing-row">
+        <div class="spacing-label">24px — lg</div>
+        <div class="spacing-block" style="width:24px;"></div>
+      </div>
+      <div class="spacing-row">
+        <div class="spacing-label">32px — xl</div>
+        <div class="spacing-block" style="width:32px;"></div>
+      </div>
+      <div class="spacing-row">
+        <div class="spacing-label">48px — 2xl</div>
+        <div class="spacing-block" style="width:48px;"></div>
+      </div>
+      <div class="spacing-row">
+        <div class="spacing-label">64px — 3xl</div>
+        <div class="spacing-block" style="width:64px;"></div>
+      </div>
+    </div>
+
+    <div class="footer">FORTUNEER · BRAND STYLE GUIDE · V1.0 · CONFIDENTIAL</div>
+  </div>
+</body>
+</html>
