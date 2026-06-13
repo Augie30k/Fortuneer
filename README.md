@@ -100,22 +100,51 @@ Intelligent features that reason over your financial data, not just report on it
 
 ## Project Structure
 
+### Principles
+- `app/` routes contain no logic — they import from `features/`
+- Components never make API calls or access the database directly
+- All data fetching and business logic lives in `features/{name}/services/`
+- Hooks bridge services and components — no logic in components beyond UI state
+- Shared logic between features goes in `lib/` or `hooks/`, never copy-pasted
+- One component per file, named to match the file
+- `lib/utils/` contains pure functions only — no side effects
+- `components/ui/` contains primitives only — zero business logic
+
+### Folder Structure
+
 ```
 fortuneer/
-├── app/                  # Next.js App Router
-│   ├── (auth)/           # Auth routes (login, signup)
-│   ├── (dashboard)/      # Protected app routes
-│   └── api/              # API routes (Plaid, Supabase)
-├── components/           # Reusable UI components
-├── lib/                  # Utilities, Supabase client, Plaid client
-├── hooks/                # Custom React hooks
-├── types/                # TypeScript types
-├── assets/
-│   └── brand/            # Logo SVGs, brand guide
-└── public/               # Static assets
+├── app/                        # Next.js App Router (routing only, no logic)
+│   ├── (auth)/
+│   ├── (dashboard)/
+│   └── api/                    # API route handlers only — delegate to services
+│
+├── features/                   # Core domain logic, one folder per feature
+│   ├── auth/
+│   │   ├── components/         # Auth-specific UI components
+│   │   ├── hooks/              # e.g. useSession, useAuth
+│   │   ├── services/           # Business logic, Supabase/Plaid calls
+│   │   └── types.ts            # Feature-specific types
+│   ├── accounts/
+│   ├── transactions/
+│   ├── budgets/
+│   ├── dashboard/
+│   └── ai/                     # v3 — AI agent layer
+│
+├── components/                 # Truly shared, reusable UI only
+│   ├── ui/                     # Primitives (Button, Input, Modal, Card)
+│   └── layout/                 # Shell, Sidebar, Navbar
+│
+├── lib/                        # Shared non-feature utilities
+│   ├── supabase/               # Supabase client setup
+│   ├── plaid/                  # Plaid client setup
+│   ├── utils/                  # Pure functions (formatCurrency, parseDate, etc.)
+│   └── constants.ts
+│
+├── hooks/                      # Shared hooks used across multiple features
+├── types/                      # Global TypeScript types and interfaces
+└── config/                     # App-level config (env validation, feature flags)
 ```
-
----
 
 ## Getting Started
 
