@@ -1,5 +1,4 @@
 # FORTUNEER
-Fortuneer is a personal finance app that helps you strategically manage your money and reach financial freedom.
 > **Pioneer Your Wealth.**
 > Fortuneer is a personal finance app that helps you strategically manage your money and reach financial freedom.
 
@@ -20,29 +19,67 @@ Fortuneer is a smart personal finance platform built for people who are serious 
 | Platform | Status |
 |---|---|
 | 🖥️ Desktop Web | v1 — In Development |
-| 📱 Mobile Web | v1 — In Development |
-| 📲 iOS / Android App | v2 — Planned (Expo) |
+| 📱 Mobile Web (PWA) | v1 — In Development |
+| 📲 iOS / Android App | Backlog — Evaluating |
+
+> Mobile is delivered as a PWA (Progressive Web App) — installable from the browser with no App Store required.
 
 ---
 
-## Features
+## Roadmap
 
-### v1 — MVP (Desktop + Mobile Web)
-- 🔐 **Secure Auth** — Supabase-powered authentication
-- 🔗 **Bank Integration** — Connect accounts via Plaid
-- 📊 **Transaction History** — Full transaction feed with categorization
-- 🏠 **Dashboard** — Account balances and spending overview
+### v1 — Core Budgeting (MVP)
+The foundation. Everything needed to be a fully functional, deployable budgeting app.
 
-### v2 — Mobile App + Growth
-- 📲 **Native iOS & Android App** — Expo (React Native), Turborepo monorepo
-- 💡 **Smart Insights** — Spending patterns and anomaly detection
-- 🎯 **Goal Setting** — Set and track financial milestones
-- 📈 **Net Worth Tracking** — Assets, liabilities, full picture
+**Infrastructure**
+- [ ] Project setup, branch structure, CI/CD pipeline
+- [ ] Supabase auth (sign up, login, session management)
+- [ ] Database schema (users, accounts, transactions, budgets, categories)
+- [ ] Vercel deployment (dev + production environments)
 
-### v3 — AI Layer
-- 🤖 **AI Financial Agent** — Natural language queries, personalized strategy
-- 🔌 **MCP Integration** — Model Context Protocol for extensible AI tooling
-- 📬 **Proactive Alerts** — Agent-driven nudges and recommendations
+**Core Features**
+- [ ] Plaid Link integration — connect bank and investment accounts
+- [ ] Store and sync Plaid access tokens securely
+- [ ] Transaction feed — full history with auto-categorization
+- [ ] Budget management — groups, categories, time periods (monthly, yearly, custom)
+- [ ] Dashboard — account balances, spending overview, budget status
+- [ ] Responsive design — desktop and mobile web (PWA)
+
+---
+
+### v2 — Refinement + Agent-Assisted Development
+Complete the budgeting feature set and introduce AI agents as internal dev tooling to accelerate development.
+
+**Budgeting Features**
+- [ ] Net worth tracking — assets, liabilities, full picture
+- [ ] Goal setting and milestone tracking
+- [ ] Smart spending insights — patterns, trends, anomaly detection
+- [ ] Recurring transaction detection and management
+- [ ] Enhanced dashboards and reporting
+
+**Dev Tooling**
+- [ ] Developer agent — accelerates feature implementation on established codebase
+- [ ] Project manager agent — tracks issues, milestones, and feature specs
+- [ ] Testing and security agent — automated test coverage and vulnerability scanning
+
+---
+
+### v3 — AI Financial Layer
+Intelligent features that reason over your financial data, not just report on it.
+
+- [ ] AI financial agent — natural language queries over your own data
+- [ ] Strategy-aware investment tracking — understands your goals per account
+- [ ] Goal-aware budgeting — tracks against personal financial targets
+- [ ] Scenario modeling — forward-looking projections and what-if analysis
+- [ ] Proactive alerts — agent-driven nudges and anomaly notifications
+- [ ] MCP integration — Model Context Protocol for extensible AI tooling
+
+---
+
+### Backlog — Future Expansion
+- Investment research layer — RAG over earnings reports, market filings, GSE data
+- Agent orchestration — multi-step autonomous financial workflows
+- Native iOS / Android app (Expo) — evaluating based on user demand
 
 ---
 
@@ -57,14 +94,12 @@ Fortuneer is a smart personal finance platform built for people who are serious 
 | Auth | Supabase Auth |
 | Bank Integration | Plaid API |
 | Deployment | Vercel |
-| Mobile App (v2) | Expo (React Native), Turborepo monorepo |
-| AI (v3) | Vercel AI SDK, Anthropic / OpenAI APIs, MCP |
+| AI (v3) | Vercel AI SDK, Anthropic API, MCP |
 
 ---
 
 ## Project Structure
 
-### v1 — Current
 ```
 fortuneer/
 ├── app/                  # Next.js App Router
@@ -78,18 +113,6 @@ fortuneer/
 ├── assets/
 │   └── brand/            # Logo SVGs, brand guide
 └── public/               # Static assets
-```
-
-### v2 — Turborepo Monorepo (Web + Mobile)
-```
-fortuneer/
-├── apps/
-│   ├── web/              # Next.js (migrated from v1)
-│   └── mobile/           # Expo (React Native)
-└── packages/
-    ├── ui/               # Shared components
-    ├── types/            # Shared TypeScript types
-    └── lib/              # Shared Supabase + Plaid clients
 ```
 
 ---
@@ -118,8 +141,6 @@ cp .env.example .env.local
 
 ### Environment Variables
 
-Create a `.env.local` file in the root with the following:
-
 ```env
 # Supabase
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
@@ -139,6 +160,48 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to view the app.
+
+---
+
+## Development Workflow
+
+### Branch Structure
+- `main` — production, auto-deploys to Vercel
+- `dev` — staging, Vercel preview deployment
+- `feature/*` — individual features, branch off `dev`
+- `fix/*` — bug fixes, branch off `dev`
+- `hotfix/*` — urgent production fixes, branch off `main`
+
+### Branch Naming
+| Type | Pattern | Example |
+|---|---|---|
+| Feature | `feature/{issue-number}-{description}` | `feature/7-plaid-link-flow` |
+| Bug Fix | `fix/{issue-number}-{description}` | `fix/12-auth-redirect-loop` |
+| Hotfix | `hotfix/{description}` | `hotfix/broken-plaid-token` |
+| Release | `release/v{version}` | `release/v1.0.0` |
+
+### Flow
+1. Pick an issue → create branch directly from the issue page (`feature/{n}-{description}` off `dev`)
+2. Build and test locally
+3. PR into `dev` with `closes #{issue-number}` → Vercel preview URL generated
+4. When all issues in a milestone are closed → PR `dev` into `main` → production release
+5. Tag the release: `git tag v1.0.0 && git push origin v1.0.0`
+
+### GitHub Project Tracking
+
+```
+Project Board (Fortuneer)
+    └── Milestone (e.g. Auth, Bank Integration)
+            └── Issue (#1 Setup Supabase Auth)
+                    └── Branch (feature/1-setup-supabase-auth)
+                            └── PR → closes #1 → milestone progress updates → board updates
+```
+
+### Environments
+| Branch | Plaid | Supabase |
+|---|---|---|
+| `dev` / `feature/*` | Sandbox | Dev project |
+| `main` | Production | Prod project |
 
 ---
 
@@ -164,87 +227,9 @@ Fortuneer's visual identity is built around **deep indigo** and **amber gold** �
 
 ---
 
-## Roadmap
-
-**v1 — MVP (Desktop + Mobile Web)**
-- [x] Project setup & brand identity
-- [ ] Supabase auth (sign up, login, session)
-- [ ] Plaid Link integration
-- [ ] Store user Plaid access tokens in Supabase
-- [ ] Fetch and store transaction history
-- [ ] Transaction feed UI
-- [ ] Spending categorization
-- [ ] Dashboard UI (balances + spending overview)
-- [ ] Responsive design (mobile web)
-- [ ] Vercel deployment
-
-**v2 — Mobile App + Growth**
-- [ ] Migrate to Turborepo monorepo
-- [ ] Expo mobile app (iOS + Android)
-- [ ] Smart spending insights
-- [ ] Goal setting and tracking
-- [ ] Net worth tracking
-
-**v3 — AI Layer**
-- [ ] AI financial agent
-- [ ] MCP integration
-- [ ] Proactive alerts and recommendations
-
----
-
-## Development Workflow
-
-### Branch Structure
-- `main` — production, auto-deploys to Vercel
-- `dev` — staging, Vercel preview deployment
-- `feature/*` — individual features, branch off `dev`
-- `fix/*` — bug fixes, branch off `dev`
-- `hotfix/*` — urgent production fixes, branch off `main`
-
-### Branch Naming Scheme
-| Type | Pattern | Example |
-|---|---|---|
-| Feature | `feature/{issue-number}-{description}` | `feature/7-plaid-link-flow` |
-| Bug Fix | `fix/{issue-number}-{description}` | `fix/12-auth-redirect-loop` |
-| Hotfix | `hotfix/{description}` | `hotfix/broken-plaid-token` |
-| Release | `release/v{version}` | `release/v1.0.0` |
-
-### Flow
-1. Pick an issue → create branch directly from the issue page on GitHub (`feature/{n}-{description}` off `dev`)
-2. Build and test locally
-3. PR into `dev` with `closes #{issue-number}` in the commit message → automatically closes issue on merge → Vercel preview URL generated
-4. When all issues in a milestone are closed → PR `dev` into `main` → production release
-5. Tag the release: `git tag v1.0.0 && git push origin v1.0.0`
-
-### GitHub Project Tracking
-Everything is connected through issues — no manual linking of branches to projects or milestones needed:
-
-```
-Project Board (Fortuneer MVP)
-    └── Milestone (e.g. Auth, Bank Integration)
-            └── Issue (#1 Setup Supabase Auth)
-                    └── Branch (feature/1-setup-supabase-auth)
-                            └── PR → closes #1 → milestone progress updates → board updates
-```
-
-- **Issues → Milestones** — assign on creation
-- **Issues → Project Board** — add to Fortuneer MVP board
-- **Branches → Issues** — create branch from issue page, reference with `closes #n`
-- **Milestones → Project** — implicit through issues, no direct link needed
-
-### Environments
-| Branch | Plaid | Supabase |
-|---|---|---|
-| `dev` / `feature/*` | Sandbox | Dev project |
-| `main` | Production | Prod project |
-
-
-
----
-
 ## Contributing
 
-This is a personal project and not currently open to external contributions. Star the repo if you find it interesting — more coming soon.
+This is a personal project shared with a small group. Not open to external contributions.
 
 ---
 
