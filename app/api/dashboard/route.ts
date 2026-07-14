@@ -29,14 +29,58 @@ export async function GET() {
       .reduce((sum, acc) => sum + acc.balance, 0) ?? 0
 
     const netWorth = totalAssets - totalLiabilities
+    const accountIds = (accounts ?? []).map((a) => a.id)
+
+    let monthlySpending = 0
+    let transactionsCount = 0
+    let recentTransactions: unknown[] = []
+
+    if (accountIds.length > 0) {
+      const startOfMonth = new Date()
+      startOfMonth.setDate(1)
+      startOfMonth.setHours(0, 0, 0, 0)
+
+      const [monthlyResult, countResult, recentResult] = await Promise.all([
+        supabase
+          .from('transactions')
+          .select('amount')
+          .in('account_id', accountIds)
+          .eq('type', 'debit')
+          .gte('date', startOfMonth.toISOString().slice(0, 10)),
+        supabase
+          .from('transactions')
+          .select('id', { count: 'exact', head: true })
+          .in('account_id', accountIds),
+        supabase
+          .from('transactions')
+          .select('*')
+          .in('account_id', accountIds)
+          .order('date', { ascending: false })
+          .limit(5),
+      ])
+
+      if (monthlyResult.error) throw monthlyResult.error
+      if (countResult.error) throw countResult.error
+      if (recentResult.error) throw recentResult.error
+
+      monthlySpending = (monthlyResult.data ?? []).reduce(
+        (sum, t) => sum + Math.abs(t.amount),
+        0
+      )
+      transactionsCount = countResult.count ?? 0
+      recentTransactions = recentResult.data ?? []
+    }
 
     return NextResponse.json({
       accounts: accounts ?? [],
+      recentTransactions,
       metrics: {
         totalAssets,
         totalLiabilities,
         netWorth,
+        monthlySpending,
         accountsCount: accounts?.length ?? 0,
+        transactionsCount,
       },
     })
   } catch (error) {

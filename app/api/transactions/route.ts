@@ -15,17 +15,27 @@ export async function GET(request: Request) {
     const limit = parseInt(searchParams.get('limit') || '50')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    let query = supabase
-      .from('transactions')
-      .select('*', { count: 'exact' })
-      .eq('account_id', accountId || '')
-      .order('date', { ascending: false })
+    const { data: userAccounts, error: accountsError } = await supabase
+      .from('accounts')
+      .select('id')
+      .eq('user_id', user.id)
 
-    if (accountId) {
-      query = query.eq('account_id', accountId)
+    if (accountsError) throw accountsError
+
+    const ownedAccountIds = (userAccounts ?? []).map((a) => a.id)
+    const accountIds = accountId
+      ? ownedAccountIds.filter((id) => id === accountId)
+      : ownedAccountIds
+
+    if (accountIds.length === 0) {
+      return NextResponse.json({ transactions: [], total: 0, limit, offset })
     }
 
-    const { data: transactions, error, count } = await query
+    const { data: transactions, error, count } = await supabase
+      .from('transactions')
+      .select('*', { count: 'exact' })
+      .in('account_id', accountIds)
+      .order('date', { ascending: false })
       .range(offset, offset + limit - 1)
 
     if (error) throw error

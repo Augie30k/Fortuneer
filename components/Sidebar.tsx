@@ -2,47 +2,55 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { LayoutDashboard, Wallet, Receipt, PiggyBank, Settings } from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+const links = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/accounts', label: 'Accounts', icon: Wallet },
+  { href: '/transactions', label: 'Transactions', icon: Receipt },
+  { href: '/budgets', label: 'Budgets', icon: PiggyBank },
+]
 
 export default function Sidebar() {
   const pathname = usePathname()
 
-  const links = [
-    { href: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { href: '/accounts', label: 'Accounts', icon: '💼' },
-    { href: '/transactions', label: 'Transactions', icon: '📝' },
-    { href: '/budgets', label: 'Budgets', icon: '💰' },
-  ]
-
   return (
-    <aside className="w-64 min-h-screen bg-[#0D0B28] border-r border-white/10 p-6 flex flex-col">
-      <nav className="space-y-2 flex-1">
-        {links.map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className={`block px-4 py-3 rounded-lg font-medium transition-colors ${
-              pathname === link.href
-                ? 'bg-[#6D28D9] text-[#EEE8F5]'
-                : 'text-[#8B8BA8] hover:bg-[#12103A] hover:text-[#EEE8F5]'
-            }`}
-          >
-            <span className="mr-2">{link.icon}</span>
-            {link.label}
-          </Link>
-        ))}
+    <aside className="flex min-h-[calc(100vh-4rem)] w-64 flex-col border-r border-border bg-card p-4">
+      <nav className="flex-1 space-y-1">
+        {links.map((link) => {
+          const Icon = link.icon
+          const active = pathname === link.href
+          return (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                active
+                  ? 'bg-secondary text-secondary-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+              )}
+            >
+              <Icon className="size-4" />
+              {link.label}
+            </Link>
+          )
+        })}
       </nav>
 
-      <div className="border-t border-white/10 pt-4 mt-4">
-        <p className="text-xs text-[#8B8BA8] uppercase tracking-wider mb-3">Settings</p>
+      <div className="border-t border-border pt-3">
         <Link
           href="/settings"
-          className={`block px-4 py-3 rounded-lg font-medium transition-colors ${
+          className={cn(
+            'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
             pathname === '/settings'
-              ? 'bg-[#6D28D9] text-[#EEE8F5]'
-              : 'text-[#8B8BA8] hover:bg-[#12103A] hover:text-[#EEE8F5]'
-          }`}
+              ? 'bg-secondary text-secondary-foreground'
+              : 'text-muted-foreground hover:bg-accent hover:text-foreground'
+          )}
         >
-          ⚙️ Settings
+          <Settings className="size-4" />
+          Settings
         </Link>
       </div>
     </aside>

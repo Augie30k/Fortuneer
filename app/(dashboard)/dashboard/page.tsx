@@ -1,29 +1,39 @@
 'use client'
 
-import { createClient } from '@/lib/supabase-client'
 import { useEffect, useState } from 'react'
-import { Account, DashboardMetrics } from '@/lib/types'
+import Link from 'next/link'
+import { TrendingUp, Wallet, ShoppingBag, Plus } from 'lucide-react'
+import { Account, DashboardMetrics, Transaction } from '@/lib/types'
+import { formatCurrency } from '@/lib/format'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Skeleton } from '@/components/ui/skeleton'
+
+const ACCOUNT_TYPE_LABEL: Record<Account['type'], string> = {
+  checking: 'Checking',
+  savings: 'Savings',
+  credit: 'Credit',
+  investment: 'Investment',
+  loan: 'Loan',
+  other: 'Other',
+}
 
 export default function DashboardPage() {
   const [accounts, setAccounts] = useState<Account[]>([])
+  const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([])
   const [metrics, setMetrics] = useState<DashboardMetrics | null>(null)
   const [loading, setLoading] = useState(true)
-  const supabase = createClient()
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // For now, we'll show placeholder data
-        // Once database is set up, we'll fetch from Supabase
-        setMetrics({
-          totalAssets: 0,
-          totalLiabilities: 0,
-          netWorth: 0,
-          monthlySpending: 0,
-          accountsCount: 0,
-          transactionsCount: 0,
-        })
-        setAccounts([])
+        const response = await fetch('/api/dashboard')
+        if (!response.ok) throw new Error('Failed to fetch dashboard data')
+        const data = await response.json()
+        setMetrics(data.metrics)
+        setAccounts(data.accounts ?? [])
+        setRecentTransactions(data.recentTransactions ?? [])
       } catch (error) {
         console.error('Error fetching dashboard data:', error)
       } finally {
@@ -37,10 +47,10 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 bg-[#12103A] rounded animate-pulse" />
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Skeleton className="h-9 w-48" />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="h-32 bg-[#12103A] rounded-lg animate-pulse" />
+            <Skeleton key={i} className="h-28 rounded-xl" />
           ))}
         </div>
       </div>
@@ -48,108 +58,127 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-[#EEE8F5] mb-2">Dashboard</h1>
-        <p className="text-[#8B8BA8]">Welcome to Fortuneer. Manage your finances strategically.</p>
+        <h1 className="font-serif text-3xl font-bold">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Welcome to Fortuneer. Manage your finances strategically.
+        </p>
       </div>
 
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <MetricCard
+          icon={TrendingUp}
           label="Net Worth"
-          value={metrics?.netWorth ?? 0}
-          type="currency"
+          value={formatCurrency(metrics?.netWorth ?? 0)}
         />
         <MetricCard
+          icon={Wallet}
           label="Total Assets"
-          value={metrics?.totalAssets ?? 0}
-          type="currency"
+          value={formatCurrency(metrics?.totalAssets ?? 0)}
         />
         <MetricCard
+          icon={ShoppingBag}
           label="Monthly Spending"
-          value={metrics?.monthlySpending ?? 0}
-          type="currency"
+          value={formatCurrency(metrics?.monthlySpending ?? 0)}
         />
       </div>
 
-      {/* Accounts Section */}
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-[#EEE8F5]">Accounts</h2>
-          <button className="px-4 py-2 bg-[#FCD34D] text-[#07071A] rounded-lg font-semibold hover:bg-[#D97706] transition-colors">
-            + Add Account
-          </button>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-xl font-semibold">Accounts</h2>
+          <Button asChild size="sm">
+            <Link href="/accounts">
+              <Plus />
+              Add Account
+            </Link>
+          </Button>
         </div>
         {accounts.length === 0 ? (
-          <div className="p-6 rounded-lg border border-white/10 bg-[#0D0B28] text-center">
-            <p className="text-[#8B8BA8] mb-4">No accounts connected yet</p>
-            <button className="px-4 py-2 bg-[#6D28D9] text-[#EEE8F5] rounded-lg font-semibold hover:bg-[#7C3AED] transition-colors">
-              Connect Bank Account
-            </button>
-          </div>
+          <Card>
+            <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+              <p className="text-muted-foreground">No accounts yet</p>
+              <Button asChild size="sm" variant="secondary">
+                <Link href="/accounts">Add your first account</Link>
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           <div className="space-y-2">
             {accounts.map((account) => (
-              <AccountCard key={account.id} account={account} />
+              <Card key={account.id}>
+                <CardContent className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold">{account.name}</p>
+                    <Badge variant="secondary" className="mt-1">
+                      {ACCOUNT_TYPE_LABEL[account.type]}
+                    </Badge>
+                  </div>
+                  <p className="text-2xl font-bold text-primary">
+                    {formatCurrency(account.balance, account.currency)}
+                  </p>
+                </CardContent>
+              </Card>
             ))}
           </div>
         )}
       </div>
 
-      {/* Recent Transactions */}
       <div>
-        <h2 className="text-xl font-bold text-[#EEE8F5] mb-4">Recent Transactions</h2>
-        <div className="p-6 rounded-lg border border-white/10 bg-[#0D0B28] text-center">
-          <p className="text-[#8B8BA8]">Connect an account to see transactions</p>
-        </div>
+        <h2 className="mb-4 text-xl font-semibold">Recent Transactions</h2>
+        {recentTransactions.length === 0 ? (
+          <Card>
+            <CardContent className="py-10 text-center text-muted-foreground">
+              No transactions yet
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {recentTransactions.map((transaction) => (
+              <Card key={transaction.id}>
+                <CardContent className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">{transaction.description}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(transaction.date).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <p
+                    className={
+                      transaction.type === 'credit'
+                        ? 'font-semibold text-emerald-400'
+                        : 'font-semibold text-rose-400'
+                    }
+                  >
+                    {transaction.type === 'credit' ? '+' : '-'}
+                    {formatCurrency(Math.abs(transaction.amount))}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
 interface MetricCardProps {
+  icon: React.ComponentType<{ className?: string }>
   label: string
-  value: number
-  type: 'currency' | 'count'
+  value: string
 }
 
-function MetricCard({ label, value, type }: MetricCardProps) {
-  const formatted = type === 'currency' ? `$${value.toLocaleString('en-US', { minimumFractionDigits: 2 })}` : value.toLocaleString()
-  
+function MetricCard({ icon: Icon, label, value }: MetricCardProps) {
   return (
-    <div className="p-6 rounded-lg border border-white/10 bg-[#0D0B28]">
-      <p className="text-[#8B8BA8] text-sm mb-2">{label}</p>
-      <p className="text-3xl font-bold text-[#FCD34D]">{formatted}</p>
-    </div>
-  )
-}
-
-interface AccountCardProps {
-  account: Account
-}
-
-function AccountCard({ account }: AccountCardProps) {
-  const accountTypeColors = {
-    checking: 'bg-blue-500/20 text-blue-300',
-    savings: 'bg-green-500/20 text-green-300',
-    credit: 'bg-orange-500/20 text-orange-300',
-    investment: 'bg-purple-500/20 text-purple-300',
-    loan: 'bg-red-500/20 text-red-300',
-    other: 'bg-gray-500/20 text-gray-300',
-  }
-
-  return (
-    <div className="p-4 rounded-lg border border-white/10 bg-[#0D0B28] flex items-center justify-between hover:bg-[#12103A] transition-colors cursor-pointer">
-      <div>
-        <p className="font-semibold text-[#EEE8F5]">{account.name}</p>
-        <span className={`text-xs font-medium px-2 py-1 rounded mt-1 inline-block ${accountTypeColors[account.type]}`}>
-          {account.type.charAt(0).toUpperCase() + account.type.slice(1)}
-        </span>
-      </div>
-      <p className="text-2xl font-bold text-[#FCD34D]">
-        ${account.balance.toLocaleString('en-US', { minimumFractionDigits: 2 })}
-      </p>
-    </div>
+    <Card>
+      <CardContent className="flex items-start justify-between">
+        <div>
+          <p className="mb-2 text-sm text-muted-foreground">{label}</p>
+          <p className="text-3xl font-bold text-primary">{value}</p>
+        </div>
+        <Icon className="size-5 text-muted-foreground" />
+      </CardContent>
+    </Card>
   )
 }
