@@ -1,20 +1,14 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { DM_Sans, EB_Garamond } from 'next/font/google'
-import { cn } from '@/lib/utils'
 import { Toaster } from '@/components/ui/sonner'
-
-const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-sans' })
-const ebGaramond = EB_Garamond({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
-  variable: '--font-serif',
-})
 
 export const metadata: Metadata = {
   title: 'Fortuneer',
   description: 'Pioneer Your Wealth',
 }
+
+// Runs before paint so a saved (or system) dark preference never flashes light.
+const themeInit = `(function(){try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}})()`
 
 export default function RootLayout({
   children,
@@ -22,10 +16,13 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={cn('font-sans', dmSans.variable, ebGaramond.variable)}>
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInit }} />
+      </head>
       <body>
         {children}
-        <Toaster theme="dark" richColors />
+        <Toaster richColors position="bottom-right" />
       </body>
     </html>
   )

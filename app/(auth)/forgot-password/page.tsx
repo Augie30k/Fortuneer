@@ -43,7 +43,7 @@ export default function ForgotPasswordPage() {
       <Card>
         <CardHeader className="items-center text-center">
           <MailCheck className="mb-2 size-10 text-primary" />
-          <CardTitle className="font-serif text-2xl">Check your email</CardTitle>
+          <CardTitle className="text-2xl font-semibold">Check your email</CardTitle>
           <CardDescription>
             If an account exists for{' '}
             <span className="text-foreground">{email}</span>, we&apos;ve sent a
@@ -62,7 +62,7 @@ export default function ForgotPasswordPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-serif text-2xl">Forgot password?</CardTitle>
+        <CardTitle className="text-2xl font-semibold">Forgot password?</CardTitle>
         <CardDescription>
           Enter your email and we&apos;ll send you a link to reset it
         </CardDescription>

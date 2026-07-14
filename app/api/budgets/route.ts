@@ -1,20 +1,8 @@
 import { createClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 
-function periodEndDate(budget: { period: string; start_date: string; end_date?: string | null }) {
-  if (budget.end_date) return new Date(budget.end_date)
-
-  const start = new Date(budget.start_date)
-  if (budget.period === 'monthly') {
-    return new Date(start.getFullYear(), start.getMonth() + 1, start.getDate())
-  }
-  if (budget.period === 'yearly') {
-    return new Date(start.getFullYear() + 1, start.getMonth(), start.getDate())
-  }
-  return null
-}
-
-export async function GET() {
+/** GET /api/budgets?month=YYYY-MM — budgets with actual spend for that month */
+export async function GET(request: Request) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -23,61 +11,50 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: budgets, error } = await supabase
-      .from('budgets')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
+    const { searchParams } = new URL(request.url)
+    const month = searchParams.get('month') ?? new Date().toISOString().slice(0, 7)
+    const [y, m] = month.split('-').map(Number)
+    const start = `${month}-01`
+    const end = new Date(y, m, 1).toISOString().slice(0, 10)
 
-    if (error) throw error
-
-    const { data: userAccounts, error: accountsError } = await supabase
-      .from('accounts')
-      .select('id')
-      .eq('user_id', user.id)
-
-    if (accountsError) throw accountsError
-
-    const accountIds = (userAccounts ?? []).map((a) => a.id)
-
-    let transactions: { category_id: string | null; amount: number; date: string; type: string }[] = []
-    if (accountIds.length > 0) {
-      const { data: txns, error: txnsError } = await supabase
+    const [budgetsResult, spendResult] = await Promise.all([
+      supabase
+        .from('budgets')
+        .select('*, categories(name, icon, color)')
+        .eq('user_id', user.id),
+      supabase
         .from('transactions')
-        .select('category_id, amount, date, type')
-        .in('account_id', accountIds)
-        .eq('type', 'debit')
+        .select('category_id, amount')
+        .eq('user_id', user.id)
+        .gt('amount', 0) // outflows only
+        .gte('date', start)
+        .lt('date', end),
+    ])
 
-      if (txnsError) throw txnsError
-      transactions = txns ?? []
+    if (budgetsResult.error) throw budgetsResult.error
+    if (spendResult.error) throw spendResult.error
+
+    const spendByCategory = new Map<string, number>()
+    for (const t of spendResult.data ?? []) {
+      if (!t.category_id) continue
+      spendByCategory.set(t.category_id, (spendByCategory.get(t.category_id) ?? 0) + t.amount)
     }
 
-    const budgetsWithSpend = (budgets ?? []).map((budget) => {
-      const start = new Date(budget.start_date)
-      const end = periodEndDate(budget)
+    const budgets = (budgetsResult.data ?? []).map((b) => ({
+      ...b,
+      category: b.categories,
+      spent: spendByCategory.get(b.category_id) ?? 0,
+    }))
 
-      const spent = transactions
-        .filter((t) => !budget.category_id || t.category_id === budget.category_id)
-        .filter((t) => {
-          const d = new Date(t.date)
-          return d >= start && (!end || d < end)
-        })
-        .reduce((sum, t) => sum + Math.abs(t.amount), 0)
-
-      return { ...budget, spent }
-    })
-
-    return NextResponse.json({ budgets: budgetsWithSpend })
+    return NextResponse.json({ budgets, month })
   } catch (error) {
     console.error('Error fetching budgets:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch budgets' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch budgets' }, { status: 500 })
   }
 }
 
-export async function POST(request: Request) {
+/** PUT /api/budgets — upsert a budget amount for a category */
+export async function PUT(request: Request) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -87,37 +64,57 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { name, amount, period, category_id, start_date, end_date } = body
+    const { category_id, amount } = body
 
-    if (!name || amount === undefined || !period || !start_date) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      )
+    if (!category_id || amount === undefined || amount < 0) {
+      return NextResponse.json({ error: 'Missing or invalid fields' }, { status: 400 })
     }
 
     const { data: budget, error } = await supabase
       .from('budgets')
-      .insert({
-        user_id: user.id,
-        name,
-        amount,
-        period,
-        category_id,
-        start_date,
-        end_date,
-      })
-      .select()
+      .upsert(
+        { user_id: user.id, category_id, amount },
+        { onConflict: 'user_id,category_id' }
+      )
+      .select('*, categories(name, icon, color)')
       .single()
 
     if (error) throw error
 
     return NextResponse.json(budget)
   } catch (error) {
-    console.error('Error creating budget:', error)
-    return NextResponse.json(
-      { error: 'Failed to create budget' },
-      { status: 500 }
-    )
+    console.error('Error saving budget:', error)
+    return NextResponse.json({ error: 'Failed to save budget' }, { status: 500 })
+  }
+}
+
+/** DELETE /api/budgets?id=<uuid> */
+export async function DELETE(request: Request) {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+    if (!id) {
+      return NextResponse.json({ error: 'Missing id' }, { status: 400 })
+    }
+
+    const { error } = await supabase
+      .from('budgets')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id)
+
+    if (error) throw error
+
+    return NextResponse.json({ ok: true })
+  } catch (error) {
+    console.error('Error deleting budget:', error)
+    return NextResponse.json({ error: 'Failed to delete budget' }, { status: 500 })
   }
 }

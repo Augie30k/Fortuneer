@@ -47,6 +47,7 @@ export const config = {
     '/accounts/:path*',
     '/transactions/:path*',
     '/budgets/:path*',
+    '/recurring/:path*',
     '/settings/:path*',
   ],
 }

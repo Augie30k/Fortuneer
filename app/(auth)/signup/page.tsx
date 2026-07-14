@@ -42,7 +42,7 @@ export default function SignupPage() {
       <Card>
         <CardHeader className="items-center text-center">
           <MailCheck className="mb-2 size-10 text-primary" />
-          <CardTitle className="font-serif text-2xl">Check your email</CardTitle>
+          <CardTitle className="text-2xl font-semibold">Check your email</CardTitle>
           <CardDescription>
             We sent a confirmation link to{' '}
             <span className="text-foreground">{email}</span>
@@ -60,7 +60,7 @@ export default function SignupPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-serif text-2xl">Create account</CardTitle>
+        <CardTitle className="text-2xl font-semibold">Create account</CardTitle>
         <CardDescription>Start your journey to financial freedom</CardDescription>
       </CardHeader>
       <CardContent>

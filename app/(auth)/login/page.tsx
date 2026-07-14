@@ -41,7 +41,7 @@ export default function LoginPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-serif text-2xl">Welcome back</CardTitle>
+        <CardTitle className="text-2xl font-semibold">Welcome back</CardTitle>
         <CardDescription>Sign in to your Fortuneer account</CardDescription>
       </CardHeader>
       <CardContent>

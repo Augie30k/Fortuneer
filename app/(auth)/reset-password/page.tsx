@@ -93,7 +93,7 @@ export default function ResetPasswordPage() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="font-serif text-2xl">Link expired</CardTitle>
+          <CardTitle className="text-2xl font-semibold">Link expired</CardTitle>
           <CardDescription>
             This password reset link is invalid or has expired.
           </CardDescription>
@@ -113,7 +113,7 @@ export default function ResetPasswordPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-serif text-2xl">Set a new password</CardTitle>
+        <CardTitle className="text-2xl font-semibold">Set a new password</CardTitle>
         <CardDescription>Choose a new password for your account</CardDescription>
       </CardHeader>
       <CardContent>
