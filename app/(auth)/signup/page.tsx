@@ -46,7 +46,14 @@ export default function SignupPage() {
     }
 
     setLoading(true)
-    const { data, error } = await supabase.auth.signUp({ email, password })
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      // Without this, the confirmation email falls back to the Supabase
+      // project's Site URL (localhost in dev config) regardless of where the
+      // user actually signed up.
+      options: { emailRedirectTo: `${window.location.origin}/login` },
+    })
     if (error) {
       setError(error.message)
       setLoading(false)

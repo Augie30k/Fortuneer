@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Monorepo siblings — the mobile app and shared package lint on their own.
+    "apps/**",
+    "packages/**",
   ]),
 ]);
 
