@@ -1,3 +1,5 @@
+import { Card, CardContent } from '@/components/ui/card'
+
 const LINKS = [
   {
     label: 'Vercel — web deployments',
@@ -22,16 +24,18 @@ export default function AdminDeploymentsPage() {
         </p>
       </div>
 
-      <ul className="space-y-3">
+      <div className="space-y-3">
         {LINKS.map((l) => (
-          <li key={l.label} className="rounded border p-4">
-            <a href={l.href} target="_blank" rel="noreferrer" className="font-medium underline underline-offset-4">
-              {l.label} ↗
-            </a>
-            <p className="mt-1 text-sm text-muted-foreground">{l.note}</p>
-          </li>
+          <Card key={l.label}>
+            <CardContent>
+              <a href={l.href} target="_blank" rel="noreferrer" className="font-medium underline underline-offset-4">
+                {l.label} ↗
+              </a>
+              <p className="mt-1 text-sm text-muted-foreground">{l.note}</p>
+            </CardContent>
+          </Card>
         ))}
-      </ul>
+      </div>
     </div>
   )
 }

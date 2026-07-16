@@ -1,8 +1,11 @@
 import { revalidatePath } from 'next/cache'
-import { createAdminClient } from '@/lib/supabase-admin'
-import { adminEnabled } from '@/lib/admin'
+import { createAdminClientFor } from '@/lib/supabase-admin'
+import { adminEnabled, getAdminEnv } from '@/lib/admin'
 import { formatDate } from '@/lib/format'
-import { plaidClient } from '@/lib/plaid'
+import { getAdminPlaidClient } from '@/lib/plaid'
+import { Card } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { AdminStat } from '../admin-stat'
 import { DeleteUserButton } from './delete-user-button'
 
 export const dynamic = 'force-dynamic'
@@ -21,7 +24,7 @@ async function setUserStatus(formData: FormData) {
   const status = String(formData.get('status') ?? '')
   if (!userId || !['pending', 'active', 'blocked'].includes(status)) return
 
-  const supabase = createAdminClient()
+  const supabase = createAdminClientFor(await getAdminEnv())
   const { error } = await supabase.from('profiles').update({ status }).eq('id', userId)
   if (error) throw new Error(`Failed to update status: ${error.message}`)
 
@@ -38,7 +41,9 @@ async function deleteUser(formData: FormData) {
   const userId = String(formData.get('userId') ?? '')
   if (!userId) return
 
-  const supabase = createAdminClient()
+  const env = await getAdminEnv()
+  const supabase = createAdminClientFor(env)
+  const plaidClient = getAdminPlaidClient(env)
 
   const { data: items } = await supabase
     .from('plaid_items')
@@ -60,7 +65,7 @@ async function deleteUser(formData: FormData) {
 }
 
 export default async function AdminUsersPage() {
-  const supabase = createAdminClient()
+  const supabase = createAdminClientFor(await getAdminEnv())
 
   const [{ data: profiles, error }, { data: authData }] = await Promise.all([
     supabase.from('profiles').select('id, email, full_name, status, created_at'),
@@ -82,62 +87,70 @@ export default async function AdminUsersPage() {
       +new Date(b.created_at) - +new Date(a.created_at)
   )
   const pendingCount = users.filter((u) => u.status === 'pending').length
+  const activeCount = users.filter((u) => u.status === 'active').length
+  const blockedCount = users.filter((u) => u.status === 'blocked').length
 
   return (
     <div className="space-y-4">
       <div>
         <h1 className="text-lg font-semibold">Users</h1>
-        <p className="text-sm text-muted-foreground">
-          {users.length} total · {pendingCount} pending approval
-        </p>
+        <p className="text-sm text-muted-foreground">{users.length} total</p>
       </div>
 
-      <table className="w-full text-sm border-collapse">
-        <thead>
-          <tr className="border-b text-left text-muted-foreground">
-            <th className="py-2 pr-4 font-medium">Email</th>
-            <th className="py-2 pr-4 font-medium">Name</th>
-            <th className="py-2 pr-4 font-medium">Status</th>
-            <th className="py-2 pr-4 font-medium">Signed up</th>
-            <th className="py-2 pr-4 font-medium">Last sign-in</th>
-            <th className="py-2 font-medium">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {users.map((u) => {
-            const signIn = lastSignIn.get(u.id)
-            return (
-              <tr key={u.id} className="border-b">
-                <td className="py-2 pr-4">{u.email ?? '—'}</td>
-                <td className="py-2 pr-4">{u.full_name ?? '—'}</td>
-                <td className="py-2 pr-4">
-                  <span className={`rounded px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[u.status] ?? ''}`}>
-                    {u.status}
-                  </span>
-                </td>
-                <td className="py-2 pr-4">{formatDate(u.created_at)}</td>
-                <td className="py-2 pr-4">{signIn ? formatDate(signIn) : 'never'}</td>
-                <td className="py-2">
-                  <div className="flex gap-2">
-                    {u.status !== 'active' && (
-                      <StatusButton userId={u.id} status="active" label={u.status === 'pending' ? 'Approve' : 'Reactivate'} />
-                    )}
-                    {u.status !== 'blocked' && (
-                      <StatusButton userId={u.id} status="blocked" label={u.status === 'pending' ? 'Deny' : 'Block'} />
-                    )}
-                    <DeleteUserButton userId={u.id} email={u.email ?? u.id} action={deleteUser} />
-                  </div>
-                </td>
-              </tr>
-            )
-          })}
-          {users.length === 0 && (
-            <tr>
-              <td colSpan={6} className="py-6 text-center text-muted-foreground">No users yet</td>
+      <div className="grid grid-cols-3 gap-3">
+        <AdminStat label="Pending approval" value={String(pendingCount)} />
+        <AdminStat label="Active" value={String(activeCount)} />
+        <AdminStat label="Blocked" value={String(blockedCount)} />
+      </div>
+
+      <Card className="overflow-x-auto">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr className="border-b text-left text-muted-foreground">
+              <th className="py-2 pr-4 pl-4 font-medium">Email</th>
+              <th className="py-2 pr-4 font-medium">Name</th>
+              <th className="py-2 pr-4 font-medium">Status</th>
+              <th className="py-2 pr-4 font-medium">Signed up</th>
+              <th className="py-2 pr-4 font-medium">Last sign-in</th>
+              <th className="py-2 pr-4 font-medium">Actions</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {users.map((u) => {
+              const signIn = lastSignIn.get(u.id)
+              return (
+                <tr key={u.id} className="border-b last:border-0">
+                  <td className="py-2 pr-4 pl-4">{u.email ?? '—'}</td>
+                  <td className="py-2 pr-4">{u.full_name ?? '—'}</td>
+                  <td className="py-2 pr-4">
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[u.status] ?? ''}`}>
+                      {u.status}
+                    </span>
+                  </td>
+                  <td className="py-2 pr-4">{formatDate(u.created_at)}</td>
+                  <td className="py-2 pr-4">{signIn ? formatDate(signIn) : 'never'}</td>
+                  <td className="py-2 pr-4">
+                    <div className="flex gap-2">
+                      {u.status !== 'active' && (
+                        <StatusButton userId={u.id} status="active" label={u.status === 'pending' ? 'Approve' : 'Reactivate'} />
+                      )}
+                      {u.status !== 'blocked' && (
+                        <StatusButton userId={u.id} status="blocked" label={u.status === 'pending' ? 'Deny' : 'Block'} />
+                      )}
+                      <DeleteUserButton userId={u.id} email={u.email ?? u.id} action={deleteUser} />
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
+            {users.length === 0 && (
+              <tr>
+                <td colSpan={6} className="py-6 text-center text-muted-foreground">No users yet</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </Card>
     </div>
   )
 }
@@ -147,12 +160,9 @@ function StatusButton({ userId, status, label }: { userId: string; status: strin
     <form action={setUserStatus}>
       <input type="hidden" name="userId" value={userId} />
       <input type="hidden" name="status" value={status} />
-      <button
-        type="submit"
-        className="rounded border px-2 py-1 text-xs hover:bg-accent"
-      >
+      <Button type="submit" variant="outline" size="xs">
         {label}
-      </button>
+      </Button>
     </form>
   )
 }
