@@ -151,13 +151,18 @@ export async function GET(request: Request) {
     // ---- Sankey: income sources -> Budget -> expense categories (+ Saved) ----
     const sankey: SankeyData = { nodes: [], links: [] }
     const nodeIndex = new Map<string, number>()
+    // Nodes dedupe by a side-scoped key, not display name: a category with both
+    // spending and a refund in the period would otherwise collapse into one node
+    // linked both into and out of the hub — a cycle, which recharts' depth
+    // recursion has no guard against (stack overflow).
     const addNode = (
+      key: string,
       name: string,
       color: string | null,
       extra?: { categoryId?: string; merchantName?: string }
     ) => {
-      if (nodeIndex.has(name)) return nodeIndex.get(name)!
-      nodeIndex.set(name, sankey.nodes.length)
+      if (nodeIndex.has(key)) return nodeIndex.get(key)!
+      nodeIndex.set(key, sankey.nodes.length)
       sankey.nodes.push({ name, color, ...extra })
       return sankey.nodes.length - 1
     }
@@ -165,20 +170,20 @@ export async function GET(request: Request) {
     if (income > 0 || expenses > 0) {
       // Colored (bluish-violet, not neutral gray) so every ribbon stays
       // colorful edge-to-edge and the hub reads as a distinct pass-through point
-      const hub = addNode('Budget', 'var(--chart-hub)')
+      const hub = addNode('hub', 'Budget', 'var(--chart-hub)')
 
       const topSources = [...incomeSources.entries()].sort((a, b) => b[1].amount - a[1].amount)
       const shownSources = topSources.slice(0, 5)
       const otherIncome = topSources.slice(5).reduce((s, [, v]) => s + v.amount, 0)
       for (const [name, { amount, color, categoryId, merchantName }] of shownSources) {
         sankey.links.push({
-          source: addNode(name, color ?? '#248A3D', { categoryId, merchantName }),
+          source: addNode(`in:${name}`, name, color ?? '#248A3D', { categoryId, merchantName }),
           target: hub,
           value: amount,
         })
       }
       if (otherIncome > 0) {
-        sankey.links.push({ source: addNode('Other income', '#248A3D'), target: hub, value: otherIncome })
+        sankey.links.push({ source: addNode('other-income', 'Other income', '#248A3D'), target: hub, value: otherIncome })
       }
 
       // The DB's category colors happen to cluster heavily in the blue/indigo/
@@ -202,16 +207,16 @@ export async function GET(request: Request) {
       shownCats.forEach(([, { name, amount, categoryId }], i) => {
         sankey.links.push({
           source: hub,
-          target: addNode(name, EXPENSE_PALETTE[i % EXPENSE_PALETTE.length], { categoryId }),
+          target: addNode(`out:${name}`, name, EXPENSE_PALETTE[i % EXPENSE_PALETTE.length], { categoryId }),
           value: amount,
         })
       })
       if (otherExpense > 0) {
-        sankey.links.push({ source: hub, target: addNode('Other', '#8E8E93'), value: otherExpense })
+        sankey.links.push({ source: hub, target: addNode('other-expense', 'Other', '#8E8E93'), value: otherExpense })
       }
       const saved = income - expenses
       if (saved > 0.005) {
-        sankey.links.push({ source: hub, target: addNode('Saved', '#0071E3'), value: saved })
+        sankey.links.push({ source: hub, target: addNode('saved', 'Saved', '#0071E3'), value: saved })
       }
     }
 
