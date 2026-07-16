@@ -18,6 +18,15 @@ export default function NetWorthChart({ data }: { data: NetWorthPoint[] }) {
     <div className="h-56 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 8 }}>
+          <defs>
+            {/* Fades toward the baseline — reads as darkening on a dark
+                surface and lightening on a light one, since it's just
+                blending toward transparent either way */}
+            <linearGradient id="netWorthFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.22} />
+              <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0.02} />
+            </linearGradient>
+          </defs>
           <CartesianGrid
             vertical={false}
             stroke="var(--border)"
@@ -62,8 +71,7 @@ export default function NetWorthChart({ data }: { data: NetWorthPoint[] }) {
             strokeWidth={2}
             strokeLinejoin="round"
             strokeLinecap="round"
-            fill="var(--chart-1)"
-            fillOpacity={0.1}
+            fill="url(#netWorthFill)"
             activeDot={{
               r: 4,
               fill: 'var(--chart-1)',

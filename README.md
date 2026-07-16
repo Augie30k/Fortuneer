@@ -18,8 +18,8 @@ Fortuneer is a smart personal finance platform built for people who are serious 
 
 | Platform | Status |
 |---|---|
-| 🖥️ Desktop Web | v1 — In Development |
-| 📱 Mobile Web (PWA) | v1 — In Development |
+| 🖥️ Desktop Web | **1.0.0-beta.1** |
+| 📱 Mobile Web (PWA) | 1.0.0-beta.1 (responsive web; PWA manifest planned) |
 | 📲 iOS / Android App | Backlog — Evaluating |
 
 > Mobile is delivered as a PWA (Progressive Web App) — installable from the browser with no App Store required.
@@ -28,22 +28,27 @@ Fortuneer is a smart personal finance platform built for people who are serious 
 
 ## Roadmap
 
+> **Current release: `1.0.0-beta.1`** — v1 core budgeting plus most of the v2
+> feature set (net worth, goals, recurring, reports, investments) and the
+> first cut of the v3 AI layer (Vera). See `FEATURES.md` for the full list.
+
 ### v1 — Core Budgeting (MVP)
 The foundation. Everything needed to be a fully functional, deployable budgeting app.
 
 **Infrastructure**
-- [ ] Project setup, branch structure, CI/CD pipeline
-- [ ] Supabase auth (sign up, login, session management)
-- [ ] Database schema (users, accounts, transactions, budgets, categories)
+- [x] Project setup, branch structure
+- [ ] CI/CD pipeline
+- [x] Supabase auth (sign up, login, sessions, forgot/reset password)
+- [x] Database schema with RLS (see `supabase/migrations/`)
 - [ ] Vercel deployment (dev + production environments)
 
 **Core Features**
-- [ ] Plaid Link integration — connect bank and investment accounts
-- [ ] Store and sync Plaid access tokens securely
-- [ ] Transaction feed — full history with auto-categorization
-- [ ] Budget management — groups, categories, time periods (monthly, yearly, custom)
-- [ ] Dashboard — account balances, spending overview, budget status
-- [ ] Responsive design — desktop and mobile web (PWA)
+- [x] Plaid Link integration — connect bank and investment accounts
+- [x] Store and sync Plaid access tokens securely (cursor-based sync)
+- [x] Transaction feed — full history with auto-categorization (Plaid PFC + user rules)
+- [x] Budget management — groups, categories, effective-dated monthly budgets
+- [x] Dashboard — customizable widgets, net worth, cash flow, spending pace
+- [x] Responsive design — desktop and mobile web
 
 ---
 
@@ -51,11 +56,11 @@ The foundation. Everything needed to be a fully functional, deployable budgeting
 Complete the budgeting feature set and introduce AI agents as internal dev tooling to accelerate development.
 
 **Budgeting Features**
-- [ ] Net worth tracking — assets, liabilities, full picture
-- [ ] Goal setting and milestone tracking
+- [x] Net worth tracking — assets, liabilities, history backfill
+- [x] Goal setting and milestone tracking
 - [ ] Smart spending insights — patterns, trends, anomaly detection
-- [ ] Recurring transaction detection and management
-- [ ] Enhanced dashboards and reporting
+- [x] Recurring transaction detection and management
+- [x] Enhanced dashboards and reporting (Sankey cash flow, spending/income breakdowns, investments)
 
 **Dev Tooling**
 - [ ] Developer agent — accelerates feature implementation on established codebase
@@ -87,10 +92,11 @@ Intelligent features that reason over your financial data, not just report on it
 
 | Layer | Technology |
 |---|---|
-| Frontend | Next.js 14+ (App Router), TypeScript |
-| Styling | Tailwind CSS |
-| Backend | Next.js API Routes / Server Actions |
-| Database | Supabase (PostgreSQL) |
+| Frontend | Next.js 16 (App Router), TypeScript, React 19 |
+| Styling | Tailwind CSS v4, shadcn/ui (Radix) |
+| Charts | Recharts + custom SVG |
+| Backend | Next.js API Routes |
+| Database | Supabase (PostgreSQL, RLS) |
 | Auth | Supabase Auth |
 | Bank Integration | Plaid API |
 | Deployment | Vercel |
@@ -100,91 +106,36 @@ Intelligent features that reason over your financial data, not just report on it
 
 ## Project Structure
 
-### Principles
-- `app/` routes contain no logic — they import from `features/`
-- Components never make API calls or access the database directly
-- All data fetching and business logic lives in `features/{name}/services/`
-- Hooks bridge services and components — no logic in components beyond UI state
-- Shared logic between features goes in `lib/` or `hooks/`, never copy-pasted
-- One component per file, named to match the file
-- `lib/utils/` contains pure functions only — no side effects
-- `components/ui/` contains primitives only — zero business logic
-
-### Folder Structure
-
 ```
 fortuneer/
-├── app/                        # Next.js App Router (routing only, no logic)
-│   ├── (auth)/
-│   ├── (dashboard)/
-│   └── api/                    # API route handlers only — delegate to services
+├── app/
+│   ├── (auth)/                 # Login, signup, forgot/reset password
+│   ├── (dashboard)/            # Authenticated pages (dashboard, accounts,
+│   │                           #   transactions, budgets, goals, recurring,
+│   │                           #   investments, reports, settings)
+│   └── api/                    # Route handlers, one folder per resource
 │
-├── features/                   # Core domain logic, one folder per feature
-│   ├── auth/
-│   │   ├── components/         # Auth-specific UI components
-│   │   ├── hooks/              # e.g. useSession, useAuth
-│   │   ├── services/           # Business logic, Supabase/Plaid calls
-│   │   └── types.ts            # Feature-specific types
-│   ├── accounts/
-│   ├── transactions/
-│   ├── budgets/
-│   ├── dashboard/
-│   └── ai/                     # v3 — AI agent layer
+├── components/                 # Shared components
+│   ├── ui/                     # shadcn/ui primitives — zero business logic
+│   └── charts/                 # Recharts / custom SVG chart components
 │
-├── components/                 # Truly shared, reusable UI only
-│   ├── ui/                     # Primitives (Button, Input, Modal, Card)
-│   └── layout/                 # Shell, Sidebar, Navbar
-│
-├── lib/                        # Shared non-feature utilities
-│   ├── supabase/               # Supabase client setup
-│   ├── plaid/                  # Plaid client setup
-│   ├── utils/                  # Pure functions (formatCurrency, parseDate, etc.)
-│   └── constants.ts
-│
-├── hooks/                      # Shared hooks used across multiple features
-├── types/                      # Global TypeScript types and interfaces
-└── config/                     # App-level config (env validation, feature flags)
+├── lib/                        # Supabase clients, Plaid client + sync engine,
+│                               #   shared helpers (format, effective budgets,
+│                               #   category forking)
+├── supabase/migrations/        # Numbered SQL migrations — schema source of truth
+└── proxy.ts                    # Auth middleware
 ```
+
+See `DEVELOPMENT.md` for data-model notes and the verification workflow.
 
 ## Getting Started
 
-### Prerequisites
-
-- Node.js 18+
-- A [Supabase](https://supabase.com) project
-- A [Plaid](https://plaid.com) developer account
-
-### Installation
+Follow `SETUP.md` — in short:
 
 ```bash
-# Clone the repo
-git clone https://github.com/yourusername/fortuneer.git
-cd fortuneer
-
-# Install dependencies
 npm install
-
-# Set up environment variables
-cp .env.example .env.local
-```
-
-### Environment Variables
-
-```env
-# Supabase
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-
-# Plaid
-PLAID_CLIENT_ID=your_plaid_client_id
-PLAID_SECRET=your_plaid_secret
-PLAID_ENV=sandbox
-```
-
-### Run Locally
-
-```bash
+cp .env.example .env.local   # fill in Supabase + Plaid keys
+# apply supabase/migrations/*.sql to your Supabase project, in order
 npm run dev
 ```
 

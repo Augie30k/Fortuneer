@@ -22,3 +22,19 @@ export const PLAID_PRODUCTS = (process.env.PLAID_PRODUCTS || 'transactions')
 export const PLAID_COUNTRY_CODES = (process.env.PLAID_COUNTRY_CODES || 'US')
   .split(',')
   .map((c) => c.trim() as CountryCode)
+
+/** Institution logo as a data URI, or null if Plaid has none / the lookup fails. */
+export async function fetchInstitutionLogo(institutionId: string): Promise<string | null> {
+  try {
+    const { data } = await plaidClient.institutionsGetById({
+      institution_id: institutionId,
+      country_codes: PLAID_COUNTRY_CODES,
+      options: { include_optional_metadata: true },
+    })
+    const logo = data.institution?.logo
+    return logo ? `data:image/png;base64,${logo}` : null
+  } catch (error) {
+    console.warn('Institution logo lookup failed:', error)
+    return null
+  }
+}

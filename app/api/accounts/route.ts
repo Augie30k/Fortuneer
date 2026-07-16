@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
+import { accrueManualAccounts } from '@/lib/accrue'
 
 export async function GET() {
   try {
@@ -10,9 +11,11 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    await accrueManualAccounts(supabase, user.id)
+
     const { data: accounts, error } = await supabase
       .from('accounts')
-      .select('*, plaid_items(institution_name, last_synced_at, status)')
+      .select('*, plaid_items(institution_name, logo_url, last_synced_at, status)')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
 
@@ -35,12 +38,15 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { name, type, subtype, balance, currency = 'USD' } = body
+    const { name, type, subtype, balance, currency = 'USD', apy, compound_frequency } = body
 
     const validTypes = ['depository', 'credit', 'loan', 'investment', 'other']
     if (!name || !validTypes.includes(type) || balance === undefined) {
       return NextResponse.json({ error: 'Missing or invalid fields' }, { status: 400 })
     }
+
+    const validFrequencies = ['daily', 'weekly', 'monthly', 'yearly']
+    const apyValue = typeof apy === 'number' && apy >= 0 && apy <= 100 ? apy : 0
 
     const { data: account, error } = await supabase
       .from('accounts')
@@ -52,6 +58,10 @@ export async function POST(request: Request) {
         balance,
         currency,
         is_manual: true,
+        apy: apyValue,
+        compound_frequency: validFrequencies.includes(compound_frequency)
+          ? compound_frequency
+          : 'monthly',
       })
       .select()
       .single()
