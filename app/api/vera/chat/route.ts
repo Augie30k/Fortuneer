@@ -4,6 +4,8 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { buildVeraTools } from '@/lib/vera-tools'
 import { pickVeraModel, VERA_HISTORY_WINDOW, VERA_MAX_OUTPUT_TOKENS } from '@/lib/vera-router'
+import { clientFromHeader, getFlag, FORTUNEER_CLIENT_HEADER } from '@/lib/admin-flags'
+import { logEvent } from '@/lib/admin-log'
 
 export const maxDuration = 60
 
@@ -31,6 +33,21 @@ export async function POST(request: Request) {
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Vera kill switches: a per-user block (Admin Hub → Users) and a global
+    // one scoped by frontend type (Admin Hub → Controls). Either blocks
+    // before any Groq call is made.
+    const client = clientFromHeader(request.headers.get(FORTUNEER_CLIENT_HEADER))
+    const [{ data: profile }, veraDisabledGlobally] = await Promise.all([
+      supabase.from('profiles').select('vera_blocked').eq('id', user.id).single(),
+      getFlag(supabase, `vera_disabled_${client}`),
+    ])
+    if (profile?.vera_blocked) {
+      return NextResponse.json({ error: 'Vera has been turned off for your account.' }, { status: 403 })
+    }
+    if (veraDisabledGlobally) {
+      return NextResponse.json({ error: 'Vera is temporarily unavailable.' }, { status: 403 })
     }
 
     if (!process.env.GROQ_API_KEY) {
@@ -97,6 +114,7 @@ export async function POST(request: Request) {
         const { error } = await supabase.from('usage_log').insert({
           user_id: user.id,
           model,
+          client,
           input_tokens: totalUsage.inputTokens ?? 0,
           output_tokens: totalUsage.outputTokens ?? 0,
         })
@@ -122,6 +140,7 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     console.error('Vera chat error:', error)
+    await logEvent('error', 'vera.chat', error instanceof Error ? error.message : String(error))
     return NextResponse.json({ error: 'Vera hit an unexpected error' }, { status: 500 })
   }
 }

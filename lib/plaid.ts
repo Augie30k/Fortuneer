@@ -1,19 +1,55 @@
 import { Configuration, PlaidApi, PlaidEnvironments, Products, CountryCode, JWKPublicKey } from 'plaid'
 import { createHash } from 'crypto'
 import { importJWK, decodeProtectedHeader, jwtVerify } from 'jose'
+import type { AdminEnv } from '@/lib/supabase-admin'
 
-const configuration = new Configuration({
-  basePath: PlaidEnvironments[process.env.PLAID_ENV || 'sandbox'],
-  baseOptions: {
-    headers: {
-      'PLAID-CLIENT-ID': process.env.PLAID_CLIENT_ID,
-      'PLAID-SECRET': process.env.PLAID_SECRET,
-      'Plaid-Version': '2020-09-14',
-    },
-  },
-})
+function buildPlaidClient(clientId: string | undefined, secret: string | undefined, env: string) {
+  return new PlaidApi(
+    new Configuration({
+      basePath: PlaidEnvironments[env],
+      baseOptions: {
+        headers: {
+          'PLAID-CLIENT-ID': clientId,
+          'PLAID-SECRET': secret,
+          'Plaid-Version': '2020-09-14',
+        },
+      },
+    })
+  )
+}
 
-export const plaidClient = new PlaidApi(configuration)
+/** Targets whichever Plaid environment is "live" in .env.local — used by
+ *  real user-facing routes, which must never depend on the admin hub's
+ *  environment toggle below. */
+export const plaidClient = buildPlaidClient(
+  process.env.PLAID_CLIENT_ID,
+  process.env.PLAID_SECRET,
+  process.env.PLAID_ENV || 'sandbox'
+)
+
+const adminPlaidClients = new Map<AdminEnv, PlaidApi>()
+
+/** Plaid client for the /admin hub: reaches dev (sandbox) or prod regardless
+ *  of which Plaid environment is "live" for the app itself — backed by its
+ *  own always-uncommented ADMIN_DEV_PLAID_ / ADMIN_PROD_PLAID_ pair, mirroring
+ *  createAdminClientFor in lib/supabase-admin.ts. */
+export function getAdminPlaidClient(env: AdminEnv): PlaidApi {
+  const cached = adminPlaidClients.get(env)
+  if (cached) return cached
+
+  const clientId = env === 'production' ? process.env.ADMIN_PROD_PLAID_CLIENT_ID : process.env.ADMIN_DEV_PLAID_CLIENT_ID
+  const secret = env === 'production' ? process.env.ADMIN_PROD_PLAID_SECRET : process.env.ADMIN_DEV_PLAID_SECRET
+
+  if (!clientId || !secret) {
+    throw new Error(
+      `Missing ADMIN_${env === 'production' ? 'PROD' : 'DEV'}_PLAID_CLIENT_ID/SECRET in .env.local`
+    )
+  }
+
+  const client = buildPlaidClient(clientId, secret, env === 'production' ? 'production' : 'sandbox')
+  adminPlaidClients.set(env, client)
+  return client
+}
 
 // 'balance' is not a Link product — it comes free with any product.
 export const PLAID_PRODUCTS = (process.env.PLAID_PRODUCTS || 'transactions')

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase-admin'
 import { verifyPlaidWebhook } from '@/lib/plaid'
 import { syncPlaidItem } from '@/lib/plaid-sync'
+import { logEvent } from '@/lib/admin-log'
 
 interface PlaidWebhookPayload {
   webhook_type?: string
@@ -16,7 +17,9 @@ export async function POST(request: Request) {
   try {
     await verifyPlaidWebhook(rawBody, request.headers.get('plaid-verification'))
   } catch (error) {
-    console.warn('Rejected Plaid webhook:', error instanceof Error ? error.message : error)
+    const message = error instanceof Error ? error.message : String(error)
+    console.warn('Rejected Plaid webhook:', message)
+    await logEvent('warn', 'plaid.webhook', `Rejected webhook: ${message}`)
     return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 401 })
   }
 
@@ -43,6 +46,7 @@ export async function POST(request: Request) {
 
   if (error || !item) {
     console.warn(`Webhook for unknown Plaid item ${item_id}`)
+    await logEvent('warn', 'plaid.webhook', `Webhook for unknown Plaid item ${item_id}`)
     return NextResponse.json({ ok: true })
   }
 
@@ -50,6 +54,9 @@ export async function POST(request: Request) {
     await syncPlaidItem(supabase, item)
   } catch (e) {
     console.error(`Webhook sync failed for item ${item_id}:`, e)
+    await logEvent('error', 'plaid.webhook', `Sync failed for item ${item_id}: ${e instanceof Error ? e.message : e}`, {
+      userId: item.user_id,
+    })
     await supabase.from('plaid_items').update({ status: 'error' }).eq('id', item.id)
     return NextResponse.json({ error: 'Sync failed' }, { status: 500 })
   }

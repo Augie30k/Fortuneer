@@ -1,12 +1,15 @@
-import { createAdminClient } from '@/lib/supabase-admin'
+import { createAdminClientFor } from '@/lib/supabase-admin'
+import { getAdminEnv } from '@/lib/admin'
 import { formatDate } from '@/lib/format'
+import { Card } from '@/components/ui/card'
+import { AdminStat } from '../admin-stat'
 
 export const dynamic = 'force-dynamic'
 
 const DAYS = 30
 
 export default async function AdminUsagePage() {
-  const supabase = createAdminClient()
+  const supabase = createAdminClientFor(await getAdminEnv())
   const since = new Date(Date.now() - DAYS * 24 * 60 * 60 * 1000).toISOString()
 
   const [{ data: rows, error }, { data: profiles }] = await Promise.all([
@@ -60,43 +63,48 @@ export default async function AdminUsagePage() {
     <div className="space-y-4">
       <div>
         <h1 className="text-lg font-semibold">AI Usage</h1>
-        <p className="text-sm text-muted-foreground">
-          Groq tokens per user per day, last {DAYS} days · {totals.requests.toLocaleString('en-US')} requests ·{' '}
-          {totals.input.toLocaleString('en-US')} in / {totals.output.toLocaleString('en-US')} out
-        </p>
+        <p className="text-sm text-muted-foreground">Groq tokens per user per day, last {DAYS} days</p>
       </div>
 
-      <table className="w-full text-sm border-collapse">
-        <thead>
-          <tr className="border-b text-left text-muted-foreground">
-            <th className="py-2 pr-4 font-medium">Day</th>
-            <th className="py-2 pr-4 font-medium">User</th>
-            <th className="py-2 pr-4 font-medium text-right">Requests</th>
-            <th className="py-2 pr-4 font-medium text-right">Input tokens</th>
-            <th className="py-2 pr-4 font-medium text-right">Output tokens</th>
-            <th className="py-2 font-medium">Models</th>
-          </tr>
-        </thead>
-        <tbody>
-          {days.map((b) => (
-            <tr key={`${b.day}|${b.email}`} className="border-b">
-              <td className="py-2 pr-4 whitespace-nowrap">{formatDate(b.day)}</td>
-              <td className="py-2 pr-4">{b.email}</td>
-              <td className="py-2 pr-4 text-right">{b.requests.toLocaleString('en-US')}</td>
-              <td className="py-2 pr-4 text-right">{b.input.toLocaleString('en-US')}</td>
-              <td className="py-2 pr-4 text-right">{b.output.toLocaleString('en-US')}</td>
-              <td className="py-2 text-xs text-muted-foreground">{[...b.models].join(', ')}</td>
+      <div className="grid grid-cols-3 gap-3">
+        <AdminStat label="Requests" value={totals.requests.toLocaleString('en-US')} />
+        <AdminStat label="Input tokens" value={totals.input.toLocaleString('en-US')} />
+        <AdminStat label="Output tokens" value={totals.output.toLocaleString('en-US')} />
+      </div>
+
+      <Card className="overflow-x-auto">
+        <table className="w-full text-sm border-collapse">
+          <thead>
+            <tr className="border-b text-left text-muted-foreground">
+              <th className="py-2 pr-4 pl-4 font-medium">Day</th>
+              <th className="py-2 pr-4 font-medium">User</th>
+              <th className="py-2 pr-4 font-medium text-right">Requests</th>
+              <th className="py-2 pr-4 font-medium text-right">Input tokens</th>
+              <th className="py-2 pr-4 font-medium text-right">Output tokens</th>
+              <th className="py-2 pr-4 font-medium">Models</th>
             </tr>
-          ))}
-          {days.length === 0 && (
-            <tr>
-              <td colSpan={6} className="py-6 text-center text-muted-foreground">
-                No usage recorded in the last {DAYS} days
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {days.map((b) => (
+              <tr key={`${b.day}|${b.email}`} className="border-b last:border-0">
+                <td className="py-2 pr-4 pl-4 whitespace-nowrap">{formatDate(b.day)}</td>
+                <td className="py-2 pr-4">{b.email}</td>
+                <td className="py-2 pr-4 text-right">{b.requests.toLocaleString('en-US')}</td>
+                <td className="py-2 pr-4 text-right">{b.input.toLocaleString('en-US')}</td>
+                <td className="py-2 pr-4 text-right">{b.output.toLocaleString('en-US')}</td>
+                <td className="py-2 pr-4 text-xs text-muted-foreground">{[...b.models].join(', ')}</td>
+              </tr>
+            ))}
+            {days.length === 0 && (
+              <tr>
+                <td colSpan={6} className="py-6 text-center text-muted-foreground">
+                  No usage recorded in the last {DAYS} days
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </Card>
     </div>
   )
 }

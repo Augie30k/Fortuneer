@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { clientFromHeader, getFlag, FORTUNEER_CLIENT_HEADER } from '@/lib/admin-flags'
 
 export async function proxy(request: NextRequest) {
   // Local-only admin hub: invisible on Vercel or when ADMIN_SECRET is unset,
@@ -35,6 +36,24 @@ export async function proxy(request: NextRequest) {
       },
     }
   )
+
+  const pathname = request.nextUrl.pathname
+  const isApi = pathname.startsWith('/api')
+
+  // App-wide kill switch, checked before auth so it also covers logged-out
+  // paths (login/signup) — a maintenance message beats a login screen that
+  // silently can't do anything useful. Scoped by frontend type: mobile sends
+  // FORTUNEER_CLIENT_HEADER on the requests that reach this app (Vera); web
+  // requests have no header and default to 'web'. Fails open on query error.
+  const requestClient = clientFromHeader(request.headers.get(FORTUNEER_CLIENT_HEADER))
+  if (await getFlag(supabase, `app_disabled_${requestClient}`)) {
+    if (isApi) {
+      return NextResponse.json({ error: 'Fortuneer is temporarily unavailable' }, { status: 503 })
+    }
+    const url = request.nextUrl.clone()
+    url.pathname = '/app-unavailable'
+    return NextResponse.redirect(url)
+  }
 
   const { data: { user } } = await supabase.auth.getUser()
 
