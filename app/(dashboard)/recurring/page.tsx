@@ -59,7 +59,7 @@ export default function RecurringPage() {
             <div>
               <p className="font-medium">Nothing recurring detected yet</p>
               <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-                Fortuneer looks for repeated charges — the same merchant on a steady
+                Fortuneer looks for repeated charges — the same vendor on a steady
                 weekly, monthly, or yearly rhythm. Sync more history and check back.
               </p>
             </div>

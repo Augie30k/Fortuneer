@@ -17,6 +17,7 @@ export async function POST() {
       products: PLAID_PRODUCTS,
       country_codes: PLAID_COUNTRY_CODES,
       language: 'en',
+      ...(process.env.PLAID_WEBHOOK_URL ? { webhook: process.env.PLAID_WEBHOOK_URL } : {}),
     })
 
     return NextResponse.json({ link_token: data.link_token })

@@ -44,7 +44,7 @@ export default function CashFlowChart({ data }: { data: CashFlowMonth[] }) {
                     title={formatMonth(String(label))}
                     rows={[
                       { name: 'Income', value: p.income, color: 'var(--chart-2)' },
-                      { name: 'Expenses', value: p.expenses, color: 'var(--chart-1)' },
+                      { name: 'Expenses', value: p.expenses, color: 'var(--negative)' },
                     ]}
                   />
                 )
@@ -60,7 +60,7 @@ export default function CashFlowChart({ data }: { data: CashFlowMonth[] }) {
             <Bar
               dataKey="expenses"
               name="Expenses"
-              fill="var(--chart-1)"
+              fill="var(--negative)"
               maxBarSize={20}
               radius={[4, 4, 0, 0]}
             />
@@ -73,7 +73,7 @@ export default function CashFlowChart({ data }: { data: CashFlowMonth[] }) {
           Income
         </span>
         <span className="flex items-center gap-1.5">
-          <span className="size-2 rounded-full" style={{ backgroundColor: 'var(--chart-1)' }} />
+          <span className="size-2 rounded-full" style={{ backgroundColor: 'var(--negative)' }} />
           Expenses
         </span>
       </div>

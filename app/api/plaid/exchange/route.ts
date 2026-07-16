@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
-import { plaidClient } from '@/lib/plaid'
+import { fetchInstitutionLogo, plaidClient } from '@/lib/plaid'
 import { syncPlaidItem } from '@/lib/plaid-sync'
 
 export async function POST(request: Request) {
@@ -23,6 +23,10 @@ export async function POST(request: Request) {
       public_token,
     })
 
+    const logoUrl = institution?.institution_id
+      ? await fetchInstitutionLogo(institution.institution_id)
+      : null
+
     const { data: item, error } = await supabase
       .from('plaid_items')
       .insert({
@@ -31,6 +35,7 @@ export async function POST(request: Request) {
         access_token: exchange.access_token,
         institution_id: institution?.institution_id ?? null,
         institution_name: institution?.name ?? null,
+        logo_url: logoUrl,
       })
       .select('id, user_id, item_id, access_token, sync_cursor')
       .single()
