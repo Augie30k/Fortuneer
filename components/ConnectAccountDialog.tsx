@@ -8,6 +8,7 @@ import type { AccountType } from '@/lib/types'
 import { LIABILITY_TYPES, SUBTYPE_OPTIONS } from '@/lib/account-types'
 import { cn } from '@/lib/utils'
 import { TypePicker, ApyFields } from '@/components/AccountTypeControls'
+import { PLAID_OAUTH_LINK_TOKEN_KEY, exchangePlaidPublicToken } from '@/lib/plaid-link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -57,6 +58,7 @@ export default function ConnectAccountDialog({
     setStep('choose')
     setLinkToken(null)
     setConnectingPlaid(false)
+    sessionStorage.removeItem(PLAID_OAUTH_LINK_TOKEN_KEY)
   }
 
   const onPlaidSuccess = useCallback(
@@ -64,13 +66,7 @@ export default function ConnectAccountDialog({
       setConnectingPlaid(true)
       onConnecting?.()
       try {
-        const response = await fetch('/api/plaid/exchange', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ public_token: publicToken, institution: metadata.institution }),
-        })
-        if (!response.ok) throw new Error('exchange failed')
-        const data = await response.json()
+        const data = await exchangePlaidPublicToken(publicToken, metadata.institution)
         toast.success(
           `${metadata.institution?.name ?? 'Bank'} connected — ${data.added} transactions imported`
         )
@@ -105,6 +101,9 @@ export default function ConnectAccountDialog({
       if (!response.ok) throw new Error('link token failed')
       const data = await response.json()
       setOpen(false)
+      // Stashed so app/api/plaid/callback can resume this same Link session
+      // if the user picks an OAuth institution and gets bounced off-site.
+      sessionStorage.setItem(PLAID_OAUTH_LINK_TOKEN_KEY, data.link_token)
       setLinkToken(data.link_token)
     } catch (error) {
       console.error('Error creating link token:', error)
