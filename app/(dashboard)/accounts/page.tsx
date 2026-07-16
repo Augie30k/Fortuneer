@@ -2,8 +2,8 @@
 /* eslint-disable @next/next/no-img-element */
 
 import type { AccountWithItem, AccountType, NetWorthPoint } from '@/lib/types'
-import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useState, type SyntheticEvent } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense, useCallback, useEffect, useMemo, useState, type SyntheticEvent } from 'react'
 import { toast } from 'sonner'
 import {
   Eye,
@@ -56,6 +56,32 @@ const RANGES = [
   { value: '1y', label: '1Y' },
   { value: 'all', label: 'All' },
 ]
+
+/**
+ * Surfaces a toast once we land back here from app/api/plaid/callback (the
+ * OAuth resume page) and strips the ?plaid= param so a refresh doesn't
+ * re-fire it. Needs its own component + Suspense boundary since
+ * useSearchParams requires one.
+ */
+function PlaidOAuthResultToast({ onRefresh }: { onRefresh: () => void }) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const result = searchParams.get('plaid')
+    if (!result) return
+    if (result === 'success') {
+      toast.success('Bank connected')
+      onRefresh()
+    } else if (result === 'error') {
+      toast.error('Failed to connect account. Please try again.')
+    }
+    router.replace('/accounts')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
+
+  return null
+}
 
 export default function AccountsPage() {
   const router = useRouter()
@@ -211,6 +237,14 @@ export default function AccountsPage() {
 
   return (
     <div className="space-y-6">
+      <Suspense fallback={null}>
+        <PlaidOAuthResultToast
+          onRefresh={() => {
+            fetchAccounts()
+            fetchHistory()
+          }}
+        />
+      </Suspense>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold">Accounts</h1>

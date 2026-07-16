@@ -18,6 +18,11 @@ export async function POST() {
       country_codes: PLAID_COUNTRY_CODES,
       language: 'en',
       ...(process.env.PLAID_WEBHOOK_URL ? { webhook: process.env.PLAID_WEBHOOK_URL } : {}),
+      // Required for OAuth institutions (Wealthfront, etc.) — must exactly
+      // match a redirect URI configured in the Plaid Dashboard so Link can
+      // hand the browser back to app/api/plaid/callback after the bank's
+      // own auth step.
+      ...(process.env.PLAID_REDIRECT_URI ? { redirect_uri: process.env.PLAID_REDIRECT_URI } : {}),
     })
 
     return NextResponse.json({ link_token: data.link_token })
