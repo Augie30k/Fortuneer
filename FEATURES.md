@@ -231,6 +231,6 @@ Money, and community feedback (r/ynab, r/MonarchMoney — July 2026).
 - ✅ Signup validates the email isn't already registered, with a live
   password-match/length checklist and a show/hide toggle
 - ✅ Modern calendar date picker across all forms
-- 🔜 Plaid webhooks for automatic syncs (currently manual + on-connect)
+- ✅ Plaid webhooks for automatic syncs (in addition to manual + on-connect)
 - 🔜 PWA manifest for installable mobile app
 - 💡 Household sharing / partner access

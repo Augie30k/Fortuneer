@@ -1,4 +1,6 @@
-import { Configuration, PlaidApi, PlaidEnvironments, Products, CountryCode } from 'plaid'
+import { Configuration, PlaidApi, PlaidEnvironments, Products, CountryCode, JWKPublicKey } from 'plaid'
+import { createHash } from 'crypto'
+import { importJWK, decodeProtectedHeader, jwtVerify } from 'jose'
 
 const configuration = new Configuration({
   basePath: PlaidEnvironments[process.env.PLAID_ENV || 'sandbox'],
@@ -36,5 +38,51 @@ export async function fetchInstitutionLogo(institutionId: string): Promise<strin
   } catch (error) {
     console.warn('Institution logo lookup failed:', error)
     return null
+  }
+}
+
+export class WebhookVerificationError extends Error {}
+
+// Plaid webhook signing keys don't rotate in place — once fetched by kid, a
+// key is valid forever, so caching for the life of the process is correct.
+const webhookKeyCache = new Map<string, JWKPublicKey>()
+
+/** Verifies a Plaid webhook's `Plaid-Verification` JWT and body hash; throws WebhookVerificationError on failure. */
+export async function verifyPlaidWebhook(rawBody: string, signedJwt: string | null): Promise<void> {
+  if (!signedJwt) throw new WebhookVerificationError('Missing Plaid-Verification header')
+
+  let kid: string | undefined
+  try {
+    ;({ kid } = decodeProtectedHeader(signedJwt))
+  } catch {
+    throw new WebhookVerificationError('Malformed webhook JWT')
+  }
+  if (!kid) throw new WebhookVerificationError('Missing kid in webhook JWT header')
+
+  let key = webhookKeyCache.get(kid)
+  if (!key) {
+    const { data } = await plaidClient.webhookVerificationKeyGet({ key_id: kid })
+    key = data.key
+    webhookKeyCache.set(kid, key)
+  }
+
+  if (key.alg !== 'ES256') {
+    throw new WebhookVerificationError(`Unsupported webhook key algorithm: ${key.alg}`)
+  }
+
+  let payload
+  try {
+    const publicKey = await importJWK(key, 'ES256')
+    ;({ payload } = await jwtVerify(signedJwt, publicKey, {
+      algorithms: ['ES256'],
+      maxTokenAge: '5 min',
+    }))
+  } catch (error) {
+    throw new WebhookVerificationError(`Webhook JWT verification failed: ${error}`)
+  }
+
+  const bodyHash = createHash('sha256').update(rawBody).digest('hex')
+  if (payload.request_body_sha256 !== bodyHash) {
+    throw new WebhookVerificationError('Webhook body hash mismatch')
   }
 }
