@@ -3,6 +3,7 @@ import { createAdminClientFor } from '@/lib/supabase-admin'
 import { adminEnabled, getAdminEnv } from '@/lib/admin'
 import { formatDate } from '@/lib/format'
 import { getAdminPlaidClient } from '@/lib/plaid'
+import { logEvent } from '@/lib/admin-log'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { AdminStat } from '../admin-stat'
@@ -31,6 +32,21 @@ async function setUserStatus(formData: FormData) {
   revalidatePath('/admin/users')
 }
 
+async function setUserVeraBlocked(formData: FormData) {
+  'use server'
+  if (!adminEnabled()) throw new Error('Admin hub is disabled')
+
+  const userId = String(formData.get('userId') ?? '')
+  const blocked = formData.get('blocked') === 'true'
+  if (!userId) return
+
+  const supabase = createAdminClientFor(await getAdminEnv())
+  const { error } = await supabase.from('profiles').update({ vera_blocked: blocked }).eq('id', userId)
+  if (error) throw new Error(`Failed to update Vera access: ${error.message}`)
+
+  revalidatePath('/admin/users')
+}
+
 /** Permanently delete a user: invalidate their Plaid access tokens first,
  *  then remove the auth user — every user-owned table cascades from
  *  auth.users(id) on delete, so that wipes profile/accounts/transactions/etc. */
@@ -52,9 +68,12 @@ async function deleteUser(formData: FormData) {
 
   await Promise.all(
     (items ?? []).map((item) =>
-      plaidClient.itemRemove({ access_token: item.access_token }).catch((e) =>
+      plaidClient.itemRemove({ access_token: item.access_token }).catch(async (e) => {
         console.warn('Plaid itemRemove failed during user deletion (continuing):', e)
-      )
+        await logEvent('warn', 'admin.deleteUser', `Plaid itemRemove failed: ${e instanceof Error ? e.message : e}`, {
+          userId,
+        })
+      })
     )
   )
 
@@ -68,7 +87,7 @@ export default async function AdminUsersPage() {
   const supabase = createAdminClientFor(await getAdminEnv())
 
   const [{ data: profiles, error }, { data: authData }] = await Promise.all([
-    supabase.from('profiles').select('id, email, full_name, status, created_at'),
+    supabase.from('profiles').select('id, email, full_name, status, vera_blocked, created_at'),
     supabase.auth.admin.listUsers({ perPage: 1000 }),
   ])
 
@@ -137,6 +156,7 @@ export default async function AdminUsersPage() {
                       {u.status !== 'blocked' && (
                         <StatusButton userId={u.id} status="blocked" label={u.status === 'pending' ? 'Deny' : 'Block'} />
                       )}
+                      <VeraToggleButton userId={u.id} blocked={u.vera_blocked} />
                       <DeleteUserButton userId={u.id} email={u.email ?? u.id} action={deleteUser} />
                     </div>
                   </td>
@@ -162,6 +182,18 @@ function StatusButton({ userId, status, label }: { userId: string; status: strin
       <input type="hidden" name="status" value={status} />
       <Button type="submit" variant="outline" size="xs">
         {label}
+      </Button>
+    </form>
+  )
+}
+
+function VeraToggleButton({ userId, blocked }: { userId: string; blocked: boolean }) {
+  return (
+    <form action={setUserVeraBlocked}>
+      <input type="hidden" name="userId" value={userId} />
+      <input type="hidden" name="blocked" value={String(!blocked)} />
+      <Button type="submit" variant="outline" size="xs">
+        {blocked ? 'Enable Vera' : 'Disable Vera'}
       </Button>
     </form>
   )

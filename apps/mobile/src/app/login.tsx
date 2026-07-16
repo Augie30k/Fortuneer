@@ -12,9 +12,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { supabase } from '@/lib/supabase'
+import { usePalette } from '@/lib/theme'
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets()
+  const palette = usePalette()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -34,20 +36,27 @@ export default function LoginScreen() {
     setLoading(false)
   }
 
+  const inputStyle = [
+    styles.input,
+    { color: palette.text, backgroundColor: palette.inputBg, borderColor: palette.border },
+  ]
+
   return (
     <KeyboardAvoidingView
       style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.body}>
-        <Text style={styles.brand}>Fortuneer</Text>
-        <Text style={styles.subtitle}>Sign in to your account</Text>
+        <Text style={[styles.brand, { color: palette.accent }]}>Fortuneer</Text>
+        <Text style={[styles.subtitle, { color: palette.muted }]}>
+          Sign in to your account
+        </Text>
 
         <View style={styles.form}>
           <TextInput
-            style={styles.input}
+            style={inputStyle}
             placeholder="Email"
-            placeholderTextColor="#8a8a8e"
+            placeholderTextColor={palette.muted}
             autoCapitalize="none"
             autoComplete="email"
             keyboardType="email-address"
@@ -55,9 +64,9 @@ export default function LoginScreen() {
             onChangeText={setEmail}
           />
           <TextInput
-            style={styles.input}
+            style={inputStyle}
             placeholder="Password"
-            placeholderTextColor="#8a8a8e"
+            placeholderTextColor={palette.muted}
             secureTextEntry
             autoComplete="password"
             value={password}
@@ -65,10 +74,14 @@ export default function LoginScreen() {
             onSubmitEditing={() => canSubmit && handleLogin()}
           />
 
-          {error && <Text style={styles.error}>{error}</Text>}
+          {error && <Text style={[styles.error, { color: palette.danger }]}>{error}</Text>}
 
           <Pressable
-            style={[styles.button, !canSubmit && styles.buttonDisabled]}
+            style={[
+              styles.button,
+              { backgroundColor: palette.accent },
+              !canSubmit && styles.buttonDisabled,
+            ]}
             disabled={!canSubmit}
             onPress={handleLogin}
           >
@@ -80,7 +93,7 @@ export default function LoginScreen() {
           </Pressable>
         </View>
 
-        <Text style={styles.footnote}>
+        <Text style={[styles.footnote, { color: palette.muted }]}>
           New to Fortuneer? Create your account on the web app — signups need
           email confirmation and admin approval first.
         </Text>
@@ -92,33 +105,18 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   body: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
-  brand: {
-    fontSize: 34,
-    fontWeight: '700',
-    textAlign: 'center',
-    color: '#208AEF',
-  },
-  subtitle: {
-    fontSize: 15,
-    textAlign: 'center',
-    color: '#8a8a8e',
-    marginTop: 6,
-    marginBottom: 32,
-  },
+  brand: { fontSize: 34, fontWeight: '700', textAlign: 'center' },
+  subtitle: { fontSize: 15, textAlign: 'center', marginTop: 6, marginBottom: 32 },
   form: { gap: 12 },
   input: {
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: '#8a8a8e',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#e5e5ea',
-    backgroundColor: 'rgba(120,120,128,0.12)',
   },
-  error: { color: '#ff453a', fontSize: 14 },
+  error: { fontSize: 14 },
   button: {
-    backgroundColor: '#208AEF',
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: 'center',
@@ -126,11 +124,5 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.5 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  footnote: {
-    fontSize: 13,
-    color: '#8a8a8e',
-    textAlign: 'center',
-    marginTop: 28,
-    lineHeight: 18,
-  },
+  footnote: { fontSize: 13, textAlign: 'center', marginTop: 28, lineHeight: 18 },
 })

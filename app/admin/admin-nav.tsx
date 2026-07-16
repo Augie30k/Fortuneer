@@ -5,9 +5,13 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
 const NAV = [
+  { href: '/admin/overview', label: 'Overview' },
   { href: '/admin/users', label: 'Users' },
   { href: '/admin/support', label: 'Support' },
   { href: '/admin/usage', label: 'AI Usage' },
+  { href: '/admin/mobile', label: 'Mobile' },
+  { href: '/admin/controls', label: 'Controls' },
+  { href: '/admin/logs', label: 'Logs' },
   { href: '/admin/deployments', label: 'Deployments' },
 ]
 

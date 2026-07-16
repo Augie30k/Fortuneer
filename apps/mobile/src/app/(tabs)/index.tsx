@@ -11,6 +11,7 @@ import { formatCurrency, type Account } from '@fortuneer/shared'
 
 import { useAuth } from '@/lib/auth-context'
 import { supabase } from '@/lib/supabase'
+import { usePalette } from '@/lib/theme'
 
 // Same money convention as the web app: credit/loan balances are liabilities
 // and subtract from net worth.
@@ -18,6 +19,7 @@ const LIABILITY_TYPES = new Set(['credit', 'loan'])
 
 export default function DashboardScreen() {
   const { session } = useAuth()
+  const palette = usePalette()
   const [accounts, setAccounts] = useState<Account[]>([])
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -59,33 +61,39 @@ export default function DashboardScreen() {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       ListHeaderComponent={
         <View style={styles.header}>
-          <Text style={styles.caption}>Signed in as {session?.user.email}</Text>
-          <Text style={styles.caption}>Net worth</Text>
-          <Text style={styles.netWorth}>{formatCurrency(netWorth)}</Text>
-          {error && <Text style={styles.error}>{error}</Text>}
+          <Text style={[styles.caption, { color: palette.muted }]}>
+            Signed in as {session?.user.email}
+          </Text>
+          <Text style={[styles.caption, { color: palette.muted }]}>Net worth</Text>
+          <Text style={[styles.netWorth, { color: palette.text }]}>
+            {formatCurrency(netWorth)}
+          </Text>
+          {error && <Text style={[styles.error, { color: palette.danger }]}>{error}</Text>}
           <Pressable onPress={() => supabase.auth.signOut()}>
-            <Text style={styles.signOut}>Sign out</Text>
+            <Text style={[styles.signOut, { color: palette.danger }]}>Sign out</Text>
           </Pressable>
         </View>
       }
       renderItem={({ item }) => (
-        <View style={styles.row}>
+        <View style={[styles.row, { borderBottomColor: palette.hairline }]}>
           <View style={styles.rowText}>
-            <Text style={styles.name} numberOfLines={1}>
+            <Text style={[styles.name, { color: palette.text }]} numberOfLines={1}>
               {item.name}
             </Text>
-            <Text style={styles.meta}>
+            <Text style={[styles.meta, { color: palette.muted }]}>
               {item.type}
               {item.mask ? ` ••${item.mask}` : ''}
             </Text>
           </View>
-          <Text style={styles.balance}>
+          <Text style={[styles.balance, { color: palette.text }]}>
             {formatCurrency(LIABILITY_TYPES.has(item.type) ? -item.balance : item.balance)}
           </Text>
         </View>
       )}
       ListEmptyComponent={
-        <Text style={styles.empty}>No accounts yet — connect one on the web app.</Text>
+        <Text style={[styles.empty, { color: palette.muted }]}>
+          No accounts yet — connect one on the web app.
+        </Text>
       }
     />
   )
@@ -94,20 +102,19 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 32 },
   header: { marginBottom: 16 },
-  caption: { fontSize: 13, color: '#8a8a8e', marginBottom: 2 },
-  netWorth: { fontSize: 34, fontWeight: '700', color: '#e5e5ea' },
-  signOut: { color: '#ff453a', fontSize: 14, marginTop: 10 },
-  error: { color: '#ff453a', fontSize: 13, marginTop: 6 },
+  caption: { fontSize: 13, marginBottom: 2 },
+  netWorth: { fontSize: 34, fontWeight: '700' },
+  signOut: { fontSize: 14, marginTop: 10 },
+  error: { fontSize: 13, marginTop: 6 },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: 'rgba(120,120,128,0.3)',
   },
   rowText: { flex: 1, marginRight: 12 },
-  name: { fontSize: 16, color: '#e5e5ea' },
-  meta: { fontSize: 12, color: '#8a8a8e', marginTop: 2 },
-  balance: { fontSize: 16, fontWeight: '600', color: '#e5e5ea' },
-  empty: { color: '#8a8a8e', textAlign: 'center', marginTop: 40 },
+  name: { fontSize: 16 },
+  meta: { fontSize: 12, marginTop: 2 },
+  balance: { fontSize: 16, fontWeight: '600' },
+  empty: { textAlign: 'center', marginTop: 40 },
 })
