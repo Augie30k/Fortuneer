@@ -15,6 +15,12 @@ export async function GET(request: Request) {
     const accountId = searchParams.get('accountId')
     const categoryId = searchParams.get('categoryId')
     const month = searchParams.get('month') // YYYY-MM
+    const startDate = searchParams.get('startDate') // YYYY-MM-DD
+    const endDate = searchParams.get('endDate')
+    const minAmount = searchParams.get('minAmount') // absolute value, dollars
+    const maxAmount = searchParams.get('maxAmount')
+    const sort = searchParams.get('sort') === 'amount' ? 'amount' : 'date'
+    const dir = searchParams.get('dir') === 'asc'
     const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200)
     const offset = parseInt(searchParams.get('offset') || '0')
 
@@ -24,8 +30,14 @@ export async function GET(request: Request) {
         count: 'exact',
       })
       .eq('user_id', user.id)
-      .order('date', { ascending: false })
-      .order('created_at', { ascending: false })
+
+    if (sort === 'amount') {
+      // amount>0 is outflow; sort by magnitude of the movement
+      query = query.order('amount', { ascending: dir })
+    } else {
+      query = query.order('date', { ascending: dir })
+    }
+    query = query.order('created_at', { ascending: false })
 
     if (q) query = query.or(`description.ilike.%${q}%,merchant_name.ilike.%${q}%`)
     if (accountId) query = query.eq('account_id', accountId)
@@ -35,6 +47,17 @@ export async function GET(request: Request) {
       const start = `${month}-01`
       const end = new Date(y, m, 1).toISOString().slice(0, 10)
       query = query.gte('date', start).lt('date', end)
+    }
+    if (startDate) query = query.gte('date', startDate)
+    if (endDate) query = query.lte('date', endDate)
+    // Absolute-amount filters need to catch both inflows and outflows
+    const min = minAmount ? Math.abs(parseFloat(minAmount)) : null
+    const max = maxAmount ? Math.abs(parseFloat(maxAmount)) : null
+    if (min != null && !Number.isNaN(min)) {
+      query = query.or(`amount.gte.${min},amount.lte.${-min}`)
+    }
+    if (max != null && !Number.isNaN(max)) {
+      query = query.gte('amount', -max).lte('amount', max)
     }
 
     const { data: transactions, error, count } = await query.range(offset, offset + limit - 1)

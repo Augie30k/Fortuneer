@@ -1,9 +1,19 @@
 import { createClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
+import { accrueManualAccounts } from '@/lib/accrue'
+import type { DashboardRange } from '@/lib/types'
 
 const LIABILITY_TYPES = new Set(['credit', 'loan'])
 
-export async function GET() {
+const RANGE_MONTHS: Record<DashboardRange, number | null> = {
+  '1m': 1,
+  '3m': 3,
+  '6m': 6,
+  '1y': 12,
+  all: null,
+}
+
+export async function GET(request: Request) {
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -12,11 +22,43 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    await accrueManualAccounts(supabase, user.id)
+
+    const { searchParams } = new URL(request.url)
+    const rangeParam = searchParams.get('range') ?? '6m'
+    const range: DashboardRange = rangeParam in RANGE_MONTHS ? (rangeParam as DashboardRange) : '6m'
+    const rangeMonths = RANGE_MONTHS[range]
+
     const now = new Date()
     const monthStart = `${now.toISOString().slice(0, 7)}-01`
-    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1)
+    const prevMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1)
       .toISOString()
       .slice(0, 10)
+
+    // Cash-flow window: the selected range (capped 12 for chart legibility), min 3 bars
+    const cashFlowMonths = Math.min(12, Math.max(3, rangeMonths ?? 12))
+    const txnWindowStart = new Date(
+      now.getFullYear(),
+      now.getMonth() - (cashFlowMonths - 1),
+      1
+    )
+      .toISOString()
+      .slice(0, 10)
+    // Transactions fetch must cover both the cash-flow window and last month for deltas
+    const txnStart = txnWindowStart < prevMonthStart ? txnWindowStart : prevMonthStart
+
+    const historyStart = rangeMonths
+      ? new Date(now.getFullYear(), now.getMonth() - rangeMonths, now.getDate())
+          .toISOString()
+          .slice(0, 10)
+      : null
+
+    let snapshotQuery = supabase
+      .from('balance_snapshots')
+      .select('account_id, balance, date')
+      .eq('user_id', user.id)
+      .order('date')
+    if (historyStart) snapshotQuery = snapshotQuery.gte('date', historyStart)
 
     const [accountsRes, txnsRes, snapshotsRes, categoriesRes] = await Promise.all([
       supabase
@@ -29,12 +71,8 @@ export async function GET() {
         .from('transactions')
         .select('amount, date, category_id')
         .eq('user_id', user.id)
-        .gte('date', sixMonthsAgo),
-      supabase
-        .from('balance_snapshots')
-        .select('account_id, balance, date')
-        .eq('user_id', user.id)
-        .order('date'),
+        .gte('date', txnStart),
+      snapshotQuery,
       supabase.from('categories').select('id, name, icon, color, is_transfer, is_income'),
     ])
 
@@ -61,14 +99,31 @@ export async function GET() {
     }
     const netWorth = totalAssets - totalLiabilities
 
-    // ---- This month's income / spending (transfers excluded) ----
+    // ---- This month + previous month income/spending (transfers excluded) ----
+    // "Same point last month" cutoff for fair spending comparisons
+    const dayOfMonth = now.getDate()
+    const prevCutoff = new Date(now.getFullYear(), now.getMonth() - 1, dayOfMonth + 1)
+      .toISOString()
+      .slice(0, 10)
+
     let monthlyIncome = 0
     let monthlySpending = 0
+    let prevMonthIncome = 0
+    let prevMonthSpending = 0
+    let prevToDateSpending = 0
     for (const t of transactions) {
-      if (t.date < monthStart || isTransfer(t.category_id)) continue
+      if (isTransfer(t.category_id)) continue
       const amount = Number(t.amount)
-      if (amount < 0) monthlyIncome += -amount
-      else monthlySpending += amount
+      if (t.date >= monthStart) {
+        if (amount < 0) monthlyIncome += -amount
+        else monthlySpending += amount
+      } else if (t.date >= prevMonthStart && t.date < monthStart) {
+        if (amount < 0) prevMonthIncome += -amount
+        else {
+          prevMonthSpending += amount
+          if (t.date < prevCutoff) prevToDateSpending += amount
+        }
+      }
     }
 
     // ---- Net worth history: forward-fill each account's last known balance ----
@@ -90,9 +145,9 @@ export async function GET() {
       return { date, assets, liabilities, netWorth: assets - liabilities }
     })
 
-    // ---- Cash flow by month, last 6 months (transfers excluded) ----
+    // ---- Cash flow by month over the selected window (transfers excluded) ----
     const cashFlowMap = new Map<string, { income: number; expenses: number }>()
-    for (let i = 5; i >= 0; i--) {
+    for (let i = cashFlowMonths - 1; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
       cashFlowMap.set(d.toISOString().slice(0, 7), { income: 0, expenses: 0 })
     }
@@ -139,11 +194,15 @@ export async function GET() {
     if (recentError) throw recentError
 
     return NextResponse.json({
+      range,
       netWorth,
       totalAssets,
       totalLiabilities,
       monthlyIncome,
       monthlySpending,
+      prevMonthIncome,
+      prevMonthSpending,
+      prevToDateSpending,
       netWorthHistory,
       cashFlow,
       spendingByCategory,
@@ -152,6 +211,9 @@ export async function GET() {
     })
   } catch (error) {
     console.error('Error fetching dashboard data:', error)
-    return NextResponse.json({ error: 'Failed to fetch dashboard data' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to fetch dashboard data' },
+      { status: 500 }
+    )
   }
 }

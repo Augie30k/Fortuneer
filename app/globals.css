@@ -79,6 +79,8 @@
     --chart-3: #FF9500;
     --chart-4: #AF52DE;
     --chart-5: #FF3B30;
+    /* bluish-violet accent — sankey hub node, distinct from chart-4's magenta lean */
+    --chart-hub: #5E5CE6;
     --radius: 0.75rem;
     --sidebar: #FFFFFF;
     --sidebar-foreground: #1D1D1F;
@@ -119,6 +121,7 @@
     --chart-3: #FF9F0A;
     --chart-4: #BF5AF2;
     --chart-5: #FF453A;
+    --chart-hub: #7D7AFF;
     --sidebar: #1C1C1E;
     --sidebar-foreground: #F5F5F7;
     --sidebar-primary: #0A84FF;
@@ -142,4 +145,28 @@
   h1, h2, h3, h4 {
     @apply tracking-tight;
     }
+}
+
+@layer base {
+  /* Amounts are typed, not stepped — hide number-input spinners app-wide */
+  input[type='number'] {
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+/* Continuous ticker (Carousel): track is rendered twice back-to-back and
+   translated exactly one copy-width, so the loop point is invisible. */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }
