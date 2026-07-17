@@ -93,11 +93,12 @@ const styles: Record<string, CSSProperties> = {
 export interface WelcomeEmailProps {
   /** Recipient's display name; falls back to a neutral greeting when absent. */
   fullName?: string | null
-  /** Absolute URL to the app's dashboard / sign-in entry point. */
-  dashboardUrl: string
+  /** Absolute URL to the app's sign-in page — new users don't have a session
+   *  yet, so this must never point straight at the dashboard. */
+  loginUrl: string
 }
 
-export default function WelcomeEmail({ fullName, dashboardUrl }: WelcomeEmailProps) {
+export default function WelcomeEmail({ fullName, loginUrl }: WelcomeEmailProps) {
   const firstName = fullName?.trim().split(' ')[0]
 
   return (
@@ -140,12 +141,13 @@ export default function WelcomeEmail({ fullName, dashboardUrl }: WelcomeEmailPro
                           access — connect your accounts, set budgets, and start tracking your
                           goals.
                         </p>
+                        <p style={styles.paragraph}>Sign in to get started.</p>
                         <table role="presentation" cellPadding={0} cellSpacing={0} style={{ margin: '8px 0 28px' }}>
                           <tbody>
                             <tr>
                               <td style={{ borderRadius: 8, backgroundColor: colors.primary }}>
-                                <a href={dashboardUrl} style={styles.button}>
-                                  Go to your dashboard
+                                <a href={loginUrl} style={styles.button}>
+                                  Sign in
                                 </a>
                               </td>
                             </tr>

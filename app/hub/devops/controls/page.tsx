@@ -1,6 +1,7 @@
 import { revalidatePath } from 'next/cache'
 import { createAdminClientFor } from '@/lib/supabase-admin'
 import { adminEnabled, getAdminEnv } from '@/lib/admin'
+import { formatDate } from '@/lib/format'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -26,7 +27,7 @@ const SECTIONS: { title: string; description: string; web: FlagKey; mobile: Flag
 
 async function setAdminFlag(formData: FormData) {
   'use server'
-  if (!adminEnabled()) throw new Error('Admin hub is disabled')
+  if (!adminEnabled()) throw new Error('The Hub is disabled')
 
   const key = String(formData.get('key') ?? '')
   const enabled = formData.get('enabled') === 'true'
@@ -39,13 +40,19 @@ async function setAdminFlag(formData: FormData) {
     .eq('key', key)
   if (error) throw new Error(`Failed to update ${key}: ${error.message}`)
 
-  revalidatePath('/admin/controls')
-  revalidatePath('/admin/overview')
+  await supabase.from('admin_events').insert({
+    level: 'warn',
+    source: 'hub.controls',
+    message: `Kill switch ${key} turned ${enabled ? 'ON' : 'off'}`,
+  })
+
+  revalidatePath('/hub/devops/controls')
+  revalidatePath('/hub/devops')
 }
 
-export default async function AdminControlsPage() {
+export default async function DevOpsControlsPage() {
   const supabase = createAdminClientFor(await getAdminEnv())
-  const { data: flags, error } = await supabase.from('admin_flags').select('key, enabled')
+  const { data: flags, error } = await supabase.from('admin_flags').select('key, enabled, updated_at')
 
   if (error) {
     return (
@@ -57,14 +64,14 @@ export default async function AdminControlsPage() {
     )
   }
 
-  const enabledByKey = new Map((flags ?? []).map((f) => [f.key, f.enabled]))
+  const flagByKey = new Map((flags ?? []).map((f) => [f.key, f]))
 
   return (
     <div className="space-y-4">
       <div>
         <h1 className="text-lg font-semibold">Controls</h1>
         <p className="text-sm text-muted-foreground">
-          Kill switches, scoped independently per frontend type.
+          Kill switches, scoped independently per frontend type. Every flip is logged.
         </p>
       </div>
 
@@ -77,8 +84,18 @@ export default async function AdminControlsPage() {
                 <p className="text-sm text-muted-foreground">{s.description}</p>
               </div>
               <div className="flex gap-3">
-                <FlagToggle flagKey={s.web} label="Web" enabled={enabledByKey.get(s.web) ?? false} />
-                <FlagToggle flagKey={s.mobile} label="Mobile" enabled={enabledByKey.get(s.mobile) ?? false} />
+                <FlagToggle
+                  flagKey={s.web}
+                  label="Web"
+                  enabled={flagByKey.get(s.web)?.enabled ?? false}
+                  updatedAt={flagByKey.get(s.web)?.updated_at ?? null}
+                />
+                <FlagToggle
+                  flagKey={s.mobile}
+                  label="Mobile"
+                  enabled={flagByKey.get(s.mobile)?.enabled ?? false}
+                  updatedAt={flagByKey.get(s.mobile)?.updated_at ?? null}
+                />
               </div>
             </CardContent>
           </Card>
@@ -88,25 +105,40 @@ export default async function AdminControlsPage() {
   )
 }
 
-function FlagToggle({ flagKey, label, enabled }: { flagKey: FlagKey; label: string; enabled: boolean }) {
+function FlagToggle({
+  flagKey,
+  label,
+  enabled,
+  updatedAt,
+}: {
+  flagKey: FlagKey
+  label: string
+  enabled: boolean
+  updatedAt: string | null
+}) {
   return (
-    <form action={setAdminFlag} className="flex items-center gap-2 rounded-lg border p-2">
-      <span className="text-sm font-medium">{label}</span>
-      <span
-        className={cn(
-          'rounded-full px-2 py-0.5 text-xs font-medium',
-          enabled
-            ? 'bg-destructive/15 text-destructive'
-            : 'bg-secondary text-secondary-foreground'
-        )}
-      >
-        {enabled ? 'Blocked' : 'Allowed'}
-      </span>
-      <input type="hidden" name="key" value={flagKey} />
-      <input type="hidden" name="enabled" value={String(!enabled)} />
-      <Button type="submit" variant="outline" size="xs">
-        {enabled ? 'Unblock' : 'Block'}
-      </Button>
-    </form>
+    <div className="rounded-lg border p-2">
+      <form action={setAdminFlag} className="flex items-center gap-2">
+        <span className="text-sm font-medium">{label}</span>
+        <span
+          className={cn(
+            'rounded-full px-2 py-0.5 text-xs font-medium',
+            enabled
+              ? 'bg-destructive/15 text-destructive'
+              : 'bg-secondary text-secondary-foreground'
+          )}
+        >
+          {enabled ? 'Blocked' : 'Allowed'}
+        </span>
+        <input type="hidden" name="key" value={flagKey} />
+        <input type="hidden" name="enabled" value={String(!enabled)} />
+        <Button type="submit" variant="outline" size="xs">
+          {enabled ? 'Unblock' : 'Block'}
+        </Button>
+      </form>
+      <p className="mt-1 text-xs text-muted-foreground">
+        {updatedAt ? `Changed ${formatDate(updatedAt, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}` : '—'}
+      </p>
+    </div>
   )
 }

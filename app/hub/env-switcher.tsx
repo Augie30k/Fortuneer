@@ -6,15 +6,15 @@ import { cn } from '@/lib/utils'
 
 async function setAdminEnv(formData: FormData) {
   'use server'
-  if (!adminEnabled()) throw new Error('Admin hub is disabled')
+  if (!adminEnabled()) throw new Error('The Hub is disabled')
 
   const env: AdminEnv = formData.get('env') === 'production' ? 'production' : 'development'
   const store = await cookies()
   store.set(ADMIN_ENV_COOKIE, env, { httpOnly: true, sameSite: 'lax' })
-  revalidatePath('/admin', 'layout')
+  revalidatePath('/hub', 'layout')
 }
 
-/** Lets the operator flip which Supabase project (dev/prod) the admin hub
+/** Lets the operator flip which Supabase project (dev/prod) The Hub
  *  reads from, independent of which project the app itself is "live" on. */
 export async function EnvSwitcher() {
   const env = await getAdminEnv()

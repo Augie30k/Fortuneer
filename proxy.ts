@@ -3,9 +3,10 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { clientFromHeader, getFlag, FORTUNEER_CLIENT_HEADER } from '@/lib/admin-flags'
 
 export async function proxy(request: NextRequest) {
-  // Local-only admin hub: invisible on Vercel or when ADMIN_SECRET is unset,
-  // and exempt from the Supabase login redirect below.
-  if (request.nextUrl.pathname.startsWith('/admin')) {
+  // Local-only Hub (and the old /admin URLs that redirect into it):
+  // invisible on Vercel or when ADMIN_SECRET is unset, and exempt from the
+  // Supabase login redirect below.
+  if (request.nextUrl.pathname.startsWith('/hub') || request.nextUrl.pathname.startsWith('/admin')) {
     if (process.env.VERCEL || !process.env.ADMIN_SECRET) {
       return new NextResponse(null, { status: 404 })
     }
@@ -111,5 +112,6 @@ export const config = {
     '/support/:path*',
     '/api/:path*',
     '/admin/:path*',
+    '/hub/:path*',
   ],
 }
