@@ -4,6 +4,8 @@ import { adminEnabled, getAdminEnv } from '@/lib/admin'
 import { formatDate } from '@/lib/format'
 import { getAdminPlaidClient } from '@/lib/plaid'
 import { logEvent } from '@/lib/admin-log'
+import { resend } from '@/lib/resend'
+import WelcomeEmail from '@/emails/welcome-email'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { AdminStat } from '../admin-stat'
@@ -17,6 +19,11 @@ const STATUS_STYLE: Record<string, string> = {
   blocked: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300',
 }
 
+/** Approving a pending user (pending -> active) sends a branded welcome
+ *  email. The send is gated *before* the status write: if it fails, we throw
+ *  and never touch the DB, so a user can never end up "active" without
+ *  actually having been notified. Other transitions (deny, block, reactivate
+ *  a blocked user) don't involve email and go straight to the update. */
 async function setUserStatus(formData: FormData) {
   'use server'
   if (!adminEnabled()) throw new Error('Admin hub is disabled')
@@ -26,8 +33,48 @@ async function setUserStatus(formData: FormData) {
   if (!userId || !['pending', 'active', 'blocked'].includes(status)) return
 
   const supabase = createAdminClientFor(await getAdminEnv())
+
+  const { data: profile, error: fetchError } = await supabase
+    .from('profiles')
+    .select('status, email, full_name')
+    .eq('id', userId)
+    .single()
+  if (fetchError) throw new Error(`Failed to load user: ${fetchError.message}`)
+
+  const isApproval = profile.status === 'pending' && status === 'active'
+  if (isApproval) {
+    if (!profile.email) throw new Error('Cannot approve: user has no email on file')
+
+    try {
+      const { error: sendError } = await resend.emails.send({
+        from: process.env.EMAIL_FROM!,
+        to: profile.email,
+        subject: "Welcome to Fortuneer — you're approved",
+        react: (
+          <WelcomeEmail
+            fullName={profile.full_name}
+            dashboardUrl={`${process.env.SITE_URL ?? 'http://localhost:3000'}/dashboard`}
+          />
+        ),
+      })
+      if (sendError) throw new Error(sendError.message)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e)
+      await logEvent('error', 'admin.setUserStatus', `Welcome email failed, approval aborted: ${message}`, { userId })
+      throw new Error(`Failed to send welcome email — user was NOT approved: ${message}`)
+    }
+  }
+
   const { error } = await supabase.from('profiles').update({ status }).eq('id', userId)
-  if (error) throw new Error(`Failed to update status: ${error.message}`)
+  if (error) {
+    if (isApproval) {
+      // Email already went out but the DB write failed — flag it so an
+      // admin can reconcile manually instead of the user silently staying
+      // "pending" despite having a welcome email in their inbox.
+      await logEvent('error', 'admin.setUserStatus', `Welcome email sent but status update failed: ${error.message}`, { userId })
+    }
+    throw new Error(`Failed to update status: ${error.message}`)
+  }
 
   revalidatePath('/admin/users')
 }

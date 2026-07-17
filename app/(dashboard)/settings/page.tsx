@@ -645,7 +645,9 @@ export default function SettingsPage() {
             </p>
           </SettingsSection>
 
-          <p className="text-center text-xs text-muted-foreground">Fortuneer v1.0.0-beta.1</p>
+          <p className="text-center text-xs text-muted-foreground">
+            Fortuneer v{process.env.NEXT_PUBLIC_APP_VERSION ?? '2.1.0-beta'}
+          </p>
         </TabsContent>
       </Tabs>
 

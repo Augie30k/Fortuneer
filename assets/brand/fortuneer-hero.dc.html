@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+:root{
+  --background:#F5F5F7; --foreground:#1D1D1F; --card:#FFFFFF; --primary:#0071E3;
+  --secondary:#E8E8ED; --muted-foreground:#86868B; --accent:#F0F0F2;
+  --border:rgba(0,0,0,0.08); --chart-3:#FF9500; --ft-orb:#FF9500;
+}
+[data-ft-theme="dark"]{
+  --background:#000000; --foreground:#F5F5F7; --card:#1C1C1E; --primary:#0A84FF;
+  --secondary:#2C2C2E; --muted-foreground:#98989D; --accent:#2C2C2E;
+  --border:rgba(255,255,255,0.1); --chart-3:#FF9F0A; --ft-orb:#FF9F0A;
+}
+[data-ft-orbs="blue"]{ --ft-orb:var(--primary); }
+html,body{height:100%;margin:0;}
+a{color:#0071E3;text-decoration:none;} a:hover{color:#1D1D1F;}
+@keyframes ftFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes ftFloatSm{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+</style>
+</helmet>
+<div data-ft-theme="{{ theme }}" data-ft-orbs="{{ orbs }}" style="position:relative; width:100%; height:100%; min-height:640px; box-sizing:border-box; overflow:hidden; background-color:var(--accent); background-image:radial-gradient(color-mix(in oklab, var(--foreground) 5%, transparent) 1px, transparent 1.3px); background-size:7px 7px; font-family:-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; display:flex; align-items:center; justify-content:center;">
+  <sc-if value="{{ showWordmark }}" hint-placeholder-val="{{ true }}">
+    <div style="position:absolute; top:40px; left:44px; display:flex; align-items:center; gap:10px; z-index:5;">
+      <div style="width:11px; height:11px; border-radius:50%; background:radial-gradient(circle at 32% 28%, color-mix(in oklab, var(--ft-orb), white 50%), var(--ft-orb) 55%, color-mix(in oklab, var(--ft-orb), black 22%));"></div>
+      <span style="font-size:15px; font-weight:600; letter-spacing:-0.02em; color:var(--foreground);">Fortuneer</span>
+    </div>
+  </sc-if>
+
+  <div style="position:relative; width:min(76%, 520px); aspect-ratio:0.92; margin-top:-2%;">
+    <!-- architectural guide circle -->
+    <div style="position:absolute; left:50%; top:1%; transform:translateX(-50%); width:74%; aspect-ratio:1; border-radius:50%; border:1px solid color-mix(in oklab, var(--foreground) 12%, transparent); z-index:0;"></div>
+    <!-- orbiting node on the guide circle -->
+    <div style="position:absolute; left:47%; top:-1.2%; width:4.2%; aspect-ratio:1; border-radius:50%; background:var(--primary); box-shadow:0 8px 14px -6px rgba(0,0,0,0.35); z-index:1; animation:ftFloatSm 7s ease-in-out infinite;"></div>
+    <!-- floating ring, upper left -->
+    <div style="position:absolute; left:6%; top:13%; width:15%; aspect-ratio:1; border-radius:50%; border:0.62em solid var(--foreground); box-sizing:border-box; box-shadow:0 18px 30px -18px rgba(0,0,0,0.35); z-index:1; animation:ftFloat 9s ease-in-out infinite;"></div>
+
+    <!-- baseline -->
+    <div style="position:absolute; left:-4%; right:-4%; bottom:0; height:2px; background:color-mix(in oklab, var(--foreground) 16%, transparent); z-index:2;"></div>
+
+    <!-- arch 1 — card -->
+    <div style="position:absolute; left:2%; bottom:2px; width:22%; height:34%; background:var(--card); border:1px solid var(--border); border-radius:999px 999px 0 0; box-shadow:0 24px 44px -24px rgba(0,0,0,0.22); z-index:2;"></div>
+    <!-- arch 2 — primary -->
+    <div style="position:absolute; left:28%; bottom:2px; width:22%; height:52%; background:var(--primary); border-radius:999px 999px 0 0; box-shadow:0 26px 48px -24px rgba(0,0,0,0.3); z-index:2;"></div>
+    <!-- arch 3 — walnut -->
+    <div style="position:absolute; left:54%; bottom:2px; width:22%; height:68%; background:var(--foreground); border-radius:999px 999px 0 0; box-shadow:0 28px 52px -24px rgba(0,0,0,0.32); z-index:2;"></div>
+    <!-- pillar -->
+    <div style="position:absolute; left:85%; bottom:2px; width:3%; height:74%; border-radius:999px; background:color-mix(in oklab, var(--foreground) 34%, var(--accent)); z-index:2;"></div>
+
+    <!-- dome on arch 2 -->
+    <div style="position:absolute; left:34%; bottom:52%; width:10%; height:5%; border-radius:999px 999px 0 0; background:var(--card); border:1px solid var(--border); border-bottom:none; box-sizing:border-box; z-index:3;"></div>
+
+    <!-- rising orbs -->
+    <div style="position:absolute; left:8.5%; bottom:34%; width:9%; aspect-ratio:1; border-radius:50%; background:radial-gradient(circle at 32% 28%, color-mix(in oklab, var(--ft-orb), white 50%), var(--ft-orb) 55%, color-mix(in oklab, var(--ft-orb), black 22%)); box-shadow:0 16px 26px -12px rgba(0,0,0,0.38); z-index:3; animation:ftFloatSm 6s ease-in-out infinite;"></div>
+    <div style="position:absolute; left:59.5%; bottom:68%; width:11%; aspect-ratio:1; border-radius:50%; background:radial-gradient(circle at 32% 28%, color-mix(in oklab, var(--ft-orb), white 50%), var(--ft-orb) 55%, color-mix(in oklab, var(--ft-orb), black 22%)); box-shadow:0 18px 30px -12px rgba(0,0,0,0.4); z-index:3; animation:ftFloatSm 6s ease-in-out infinite 0.8s;"></div>
+    <div style="position:absolute; left:79.75%; bottom:72.5%; width:13.5%; aspect-ratio:1; border-radius:50%; background:radial-gradient(circle at 32% 28%, color-mix(in oklab, var(--ft-orb), white 50%), var(--ft-orb) 55%, color-mix(in oklab, var(--ft-orb), black 22%)); box-shadow:0 20px 34px -12px rgba(0,0,0,0.42); z-index:3; animation:ftFloat 7.5s ease-in-out infinite 0.4s;"></div>
+  </div>
+
+  <div style="position:absolute; bottom:38px; left:0; right:0; display:flex; flex-direction:column; align-items:center; gap:6px; z-index:5;">
+    <div style="font-size:17px; font-weight:600; letter-spacing:-0.02em; color:var(--foreground); text-wrap:pretty;">Organized growth, by design.</div>
+    <div style="font-size:13px; color:var(--muted-foreground); text-wrap:pretty;">Your financial architecture, one balanced piece at a time.</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: {&quot;width&quot;: 760, &quot;height&quot;: 900},
+  &quot;theme&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;light&quot;, &quot;dark&quot;], &quot;default&quot;: &quot;light&quot;, &quot;tsType&quot;: &quot;\&quot;light\&quot; | \&quot;dark\&quot;&quot;, &quot;section&quot;: &quot;Appearance&quot;},
+  &quot;orbs&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;options&quot;: [&quot;brass&quot;, &quot;blue&quot;], &quot;default&quot;: &quot;brass&quot;, &quot;tsType&quot;: &quot;\&quot;brass\&quot; | \&quot;blue\&quot;&quot;, &quot;section&quot;: &quot;Appearance&quot;},
+  &quot;showWordmark&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Content&quot;}
+}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      theme: this.props.theme ?? "light",
+      orbs: this.props.orbs ?? "brass",
+      showWordmark: this.props.showWordmark ?? true,
+    };
+  }
+}
+</script>
+</body>
+</html>

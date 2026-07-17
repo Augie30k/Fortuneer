@@ -4,19 +4,16 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Fortuneer — Brand Style Guide</title>
-  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
   <style>
     :root {
-      --bg: #07071A;
-      --bg2: #0D0B28;
-      --bg3: #12103A;
-      --indigo: #6D28D9;
-      --indigo-light: #A78BFA;
-      --gold: #FCD34D;
-      --gold-dark: #D97706;
-      --text: #EEE8F5;
-      --text-muted: #8B8BA8;
-      --border: rgba(255,255,255,0.07);
+      --bg: #F5F5F7;
+      --card-bg: #FFFFFF;
+      --text: #1D1D1F;
+      --text-muted: #86868B;
+      --border: rgba(0,0,0,0.08);
+      --primary: #0071E3;
+      --orb: #FF9500;
+      --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -24,7 +21,7 @@
     body {
       background: var(--bg);
       color: var(--text);
-      font-family: 'DM Sans', sans-serif;
+      font-family: var(--font);
       line-height: 1.6;
     }
 
@@ -41,29 +38,36 @@
       margin-bottom: 64px;
     }
 
-    .brand-name {
-      font-family: 'EB Garamond', serif;
-      font-size: 56px;
-      font-weight: 700;
-      letter-spacing: 4px;
-      line-height: 1;
-      margin-bottom: 8px;
+    .brand-lockup {
+      display: flex;
+      align-items: center;
+      gap: 14px;
     }
 
-    .brand-name span { color: var(--gold); }
+    .brand-wordmark {
+      font-size: 32px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text);
+    }
 
     .tagline {
-      letter-spacing: 8px;
-      font-size: 11px;
-      color: var(--indigo-light);
-      text-transform: uppercase;
-      margin-top: 12px;
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-top: 20px;
+    }
+
+    .tagline-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 4px;
     }
 
     .version {
       font-size: 11px;
       color: var(--text-muted);
-      margin-top: 8px;
+      margin-top: 12px;
     }
 
     /* Sections */
@@ -80,6 +84,16 @@
       padding-bottom: 12px;
       border-bottom: 1px solid var(--border);
     }
+
+    .subsection-label {
+      font-size: 11px;
+      letter-spacing: 3px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin: 28px 0 14px;
+    }
+
+    .subsection-label:first-child { margin-top: 0; }
 
     /* Colors */
     .color-grid {
@@ -100,7 +114,7 @@
 
     .color-info {
       padding: 12px;
-      background: var(--bg2);
+      background: var(--card-bg);
     }
 
     .color-name {
@@ -138,33 +152,31 @@
     }
 
     .type-display {
-      font-family: 'EB Garamond', serif;
-      font-size: 48px;
-      font-weight: 700;
+      font-size: 40px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
       color: var(--text);
       line-height: 1.1;
     }
 
     .type-heading {
-      font-family: 'EB Garamond', serif;
-      font-size: 28px;
-      font-weight: 500;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
       color: var(--text);
     }
 
     .type-body {
-      font-family: 'DM Sans', sans-serif;
       font-size: 16px;
       font-weight: 400;
       color: var(--text-muted);
     }
 
     .type-caption {
-      font-family: 'DM Sans', sans-serif;
       font-size: 11px;
-      letter-spacing: 5px;
+      letter-spacing: 3px;
       text-transform: uppercase;
-      color: var(--indigo-light);
+      color: var(--text-muted);
     }
 
     .type-meta {
@@ -191,28 +203,8 @@
       min-height: 120px;
     }
 
-    .logo-card.dark { background: var(--bg2); }
-    .logo-card.light { background: #F5F0E8; }
-
-    .logo-text-dark {
-      font-family: 'EB Garamond', serif;
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: 3px;
-      color: #EEE8F5;
-    }
-
-    .logo-text-dark span { color: var(--gold); }
-
-    .logo-text-light {
-      font-family: 'EB Garamond', serif;
-      font-size: 28px;
-      font-weight: 700;
-      letter-spacing: 3px;
-      color: #07071A;
-    }
-
-    .logo-text-light span { color: var(--indigo); }
+    .logo-card.light { background: #FFFFFF; }
+    .logo-card.dark { background: #000000; }
 
     .logo-label {
       font-size: 10px;
@@ -231,7 +223,7 @@
     }
 
     .voice-card {
-      background: var(--bg2);
+      background: var(--card-bg);
       border-radius: 12px;
       padding: 24px;
       border: 1px solid var(--border);
@@ -244,8 +236,8 @@
       margin-bottom: 12px;
     }
 
-    .voice-card h4.yes { color: var(--gold); }
-    .voice-card h4.no { color: #EF4444; }
+    .voice-card h4.yes { color: var(--primary); }
+    .voice-card h4.no { color: #FF3B30; }
 
     .voice-card ul {
       list-style: none;
@@ -271,7 +263,7 @@
     }
 
     .spacing-block {
-      background: var(--indigo);
+      background: var(--primary);
       opacity: 0.6;
       height: 16px;
       border-radius: 3px;
@@ -300,77 +292,221 @@
 
     <!-- Header -->
     <div class="header">
-      <div class="brand-name">FORT<span>UNEER</span></div>
-      <div class="tagline">Pioneer Your Wealth</div>
-      <div class="version">Brand Style Guide — v1.0</div>
+      <div class="brand-lockup">
+        <svg width="44" height="44" viewBox="0 0 512 512">
+          <defs>
+            <linearGradient id="hdrIconBg" x1="10%" y1="0%" x2="70%" y2="100%">
+              <stop offset="0%" style="stop-color:#1187F1;stop-opacity:1" />
+              <stop offset="55%" style="stop-color:#0071E3;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#005BB8;stop-opacity:1" />
+            </linearGradient>
+            <radialGradient id="hdrIconOrb" cx="32%" cy="28%" r="75%">
+              <stop offset="0%" style="stop-color:#FFC56E;stop-opacity:1" />
+              <stop offset="55%" style="stop-color:#FF9500;stop-opacity:1" />
+              <stop offset="100%" style="stop-color:#D97E00;stop-opacity:1" />
+            </radialGradient>
+          </defs>
+          <rect width="512" height="512" rx="113" fill="url(#hdrIconBg)"/>
+          <rect x="154" y="123" width="56" height="266" rx="28" fill="#FFFFFF"/>
+          <rect x="154" y="123" width="195" height="56" rx="28" fill="#FFFFFF"/>
+          <rect x="154" y="230" width="148" height="56" rx="28" fill="#FFFFFF" opacity="0.6"/>
+          <circle cx="343" cy="353" r="36" fill="url(#hdrIconOrb)"/>
+        </svg>
+        <span class="brand-wordmark">Fortuneer</span>
+      </div>
+      <div class="tagline">Organized growth, by design.</div>
+      <div class="tagline-sub">Your financial architecture, one balanced piece at a time.</div>
+      <div class="version">Brand Style Guide — v2.0</div>
     </div>
 
     <!-- Colors -->
     <div class="section">
       <div class="section-label">Color System</div>
+
+      <div class="subsection-label">Light Mode</div>
       <div class="color-grid">
         <div class="color-card">
-          <div class="color-swatch" style="background:#FCD34D;"></div>
+          <div class="color-swatch" style="background:#0071E3;"></div>
           <div class="color-info">
-            <div class="color-name">Gold</div>
-            <div class="color-hex">#FCD34D</div>
-            <div class="color-role">Primary Accent</div>
+            <div class="color-name">Primary Blue</div>
+            <div class="color-hex">#0071E3</div>
+            <div class="color-role">Primary / Ring</div>
           </div>
         </div>
         <div class="color-card">
-          <div class="color-swatch" style="background:#D97706;"></div>
+          <div class="color-swatch" style="background:#FF9500;"></div>
           <div class="color-info">
-            <div class="color-name">Gold Dark</div>
-            <div class="color-hex">#D97706</div>
-            <div class="color-role">Gradient End / Hover</div>
+            <div class="color-name">Orb Orange</div>
+            <div class="color-hex">#FF9500</div>
+            <div class="color-role">Accent / chart-3</div>
           </div>
         </div>
         <div class="color-card">
-          <div class="color-swatch" style="background:#6D28D9;"></div>
+          <div class="color-swatch" style="background:#1D1D1F;"></div>
           <div class="color-info">
-            <div class="color-name">Indigo</div>
-            <div class="color-hex">#6D28D9</div>
-            <div class="color-role">Secondary Accent</div>
-          </div>
-        </div>
-        <div class="color-card">
-          <div class="color-swatch" style="background:#A78BFA;"></div>
-          <div class="color-info">
-            <div class="color-name">Indigo Light</div>
-            <div class="color-hex">#A78BFA</div>
-            <div class="color-role">Taglines / Labels</div>
-          </div>
-        </div>
-        <div class="color-card">
-          <div class="color-swatch" style="background:#07071A;"></div>
-          <div class="color-info">
-            <div class="color-name">Obsidian</div>
-            <div class="color-hex">#07071A</div>
-            <div class="color-role">Background Primary</div>
-          </div>
-        </div>
-        <div class="color-card">
-          <div class="color-swatch" style="background:#0D0B28;"></div>
-          <div class="color-info">
-            <div class="color-name">Deep Indigo</div>
-            <div class="color-hex">#0D0B28</div>
-            <div class="color-role">Background Secondary</div>
-          </div>
-        </div>
-        <div class="color-card">
-          <div class="color-swatch" style="background:#EEE8F5;"></div>
-          <div class="color-info">
-            <div class="color-name">Frost</div>
-            <div class="color-hex">#EEE8F5</div>
+            <div class="color-name">Foreground</div>
+            <div class="color-hex">#1D1D1F</div>
             <div class="color-role">Primary Text</div>
           </div>
         </div>
         <div class="color-card">
-          <div class="color-swatch" style="background:#8B8BA8;"></div>
+          <div class="color-swatch" style="background:#86868B;"></div>
           <div class="color-info">
-            <div class="color-name">Slate</div>
-            <div class="color-hex">#8B8BA8</div>
-            <div class="color-role">Muted Text</div>
+            <div class="color-name">Muted Foreground</div>
+            <div class="color-hex">#86868B</div>
+            <div class="color-role">Secondary Text</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#F5F5F7;"></div>
+          <div class="color-info">
+            <div class="color-name">Background</div>
+            <div class="color-hex">#F5F5F7</div>
+            <div class="color-role">App Background</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#FFFFFF;"></div>
+          <div class="color-info">
+            <div class="color-name">Card</div>
+            <div class="color-hex">#FFFFFF</div>
+            <div class="color-role">Surface</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#E8E8ED;"></div>
+          <div class="color-info">
+            <div class="color-name">Secondary</div>
+            <div class="color-hex">#E8E8ED</div>
+            <div class="color-role">Secondary Surface</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#F0F0F2;"></div>
+          <div class="color-info">
+            <div class="color-name">Accent</div>
+            <div class="color-hex">#F0F0F2</div>
+            <div class="color-role">Hover / Subtle Fill</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsection-label">Dark Mode</div>
+      <div class="color-grid">
+        <div class="color-card">
+          <div class="color-swatch" style="background:#0A84FF;"></div>
+          <div class="color-info">
+            <div class="color-name">Primary Blue</div>
+            <div class="color-hex">#0A84FF</div>
+            <div class="color-role">Primary / Ring</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#FF9F0A;"></div>
+          <div class="color-info">
+            <div class="color-name">Orb Orange</div>
+            <div class="color-hex">#FF9F0A</div>
+            <div class="color-role">Accent / chart-3</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#F5F5F7;"></div>
+          <div class="color-info">
+            <div class="color-name">Foreground</div>
+            <div class="color-hex">#F5F5F7</div>
+            <div class="color-role">Primary Text</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#98989D;"></div>
+          <div class="color-info">
+            <div class="color-name">Muted Foreground</div>
+            <div class="color-hex">#98989D</div>
+            <div class="color-role">Secondary Text</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#000000;"></div>
+          <div class="color-info">
+            <div class="color-name">Background</div>
+            <div class="color-hex">#000000</div>
+            <div class="color-role">App Background</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#1C1C1E;"></div>
+          <div class="color-info">
+            <div class="color-name">Card</div>
+            <div class="color-hex">#1C1C1E</div>
+            <div class="color-role">Surface</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#2C2C2E;"></div>
+          <div class="color-info">
+            <div class="color-name">Secondary</div>
+            <div class="color-hex">#2C2C2E</div>
+            <div class="color-role">Secondary Surface</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#2C2C2E;"></div>
+          <div class="color-info">
+            <div class="color-name">Accent</div>
+            <div class="color-hex">#2C2C2E</div>
+            <div class="color-role">Hover / Subtle Fill</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsection-label">Data Visualization</div>
+      <div class="color-grid">
+        <div class="color-card">
+          <div class="color-swatch" style="background:#0071E3;"></div>
+          <div class="color-info">
+            <div class="color-name">Chart 1</div>
+            <div class="color-hex">#0071E3</div>
+            <div class="color-role">Primary series</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#248A3D;"></div>
+          <div class="color-info">
+            <div class="color-name">Chart 2</div>
+            <div class="color-hex">#248A3D</div>
+            <div class="color-role">Positive / growth</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#FF9500;"></div>
+          <div class="color-info">
+            <div class="color-name">Chart 3</div>
+            <div class="color-hex">#FF9500</div>
+            <div class="color-role">Accent series</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#AF52DE;"></div>
+          <div class="color-info">
+            <div class="color-name">Chart 4</div>
+            <div class="color-hex">#AF52DE</div>
+            <div class="color-role">Accent series</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#FF3B30;"></div>
+          <div class="color-info">
+            <div class="color-name">Chart 5 / Destructive</div>
+            <div class="color-hex">#FF3B30</div>
+            <div class="color-role">Negative / error</div>
+          </div>
+        </div>
+        <div class="color-card">
+          <div class="color-swatch" style="background:#5E5CE6;"></div>
+          <div class="color-info">
+            <div class="color-name">Chart Hub</div>
+            <div class="color-hex">#5E5CE6</div>
+            <div class="color-role">Sankey hub node</div>
           </div>
         </div>
       </div>
@@ -381,45 +517,122 @@
       <div class="section-label">Typography</div>
 
       <div class="type-row">
-        <div class="type-label">Display — Wordmark & Heroes</div>
-        <div class="type-display">FORTUNEER</div>
-        <div class="type-meta">EB Garamond · 700 · Letter-spacing: 4px</div>
+        <div class="type-label">Display — Wordmark &amp; Heroes</div>
+        <div class="type-display">Fortuneer</div>
+        <div class="type-meta">-apple-system (SF Pro Display) · 600 · Letter-spacing: -0.02em</div>
       </div>
 
       <div class="type-row">
         <div class="type-label">Heading</div>
-        <div class="type-heading">Pioneer Your Wealth</div>
-        <div class="type-meta">EB Garamond · 500 · 28px</div>
+        <div class="type-heading">Organized growth, by design.</div>
+        <div class="type-meta">-apple-system (SF Pro Display) · 600 · 22px · Letter-spacing: -0.02em</div>
       </div>
 
       <div class="type-row">
         <div class="type-label">Body</div>
-        <div class="type-body">Take control of your finances with clarity, strategy, and purpose. Fortuneer helps you see the full picture.</div>
-        <div class="type-meta">DM Sans · 400 · 16px</div>
+        <div class="type-body">Your financial architecture, one balanced piece at a time.</div>
+        <div class="type-meta">-apple-system (SF Pro Text) · 400 · 16px</div>
       </div>
 
       <div class="type-row">
         <div class="type-label">Caption / Label</div>
         <div class="type-caption">Pioneer Your Wealth</div>
-        <div class="type-meta">DM Sans · 400 · 11px · Letter-spacing: 5px · Uppercase</div>
+        <div class="type-meta">-apple-system (SF Pro Text) · 400 · 11px · Letter-spacing: 3px · Uppercase</div>
       </div>
     </div>
 
     <!-- Logo Usage -->
     <div class="section">
       <div class="section-label">Logo Usage</div>
+
+      <div class="subsection-label">Icon Lockup</div>
       <div class="logo-grid">
         <div>
-          <div class="logo-card dark">
-            <div class="logo-text-dark">FORT<span>UNEER</span></div>
+          <div class="logo-card light">
+            <svg width="200" height="72" viewBox="0 0 300 72">
+              <defs>
+                <linearGradient id="lgIconBgL" x1="10%" y1="0%" x2="70%" y2="100%">
+                  <stop offset="0%" style="stop-color:#1187F1;stop-opacity:1" />
+                  <stop offset="55%" style="stop-color:#0071E3;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#005BB8;stop-opacity:1" />
+                </linearGradient>
+                <radialGradient id="lgIconOrbL" cx="32%" cy="28%" r="75%">
+                  <stop offset="0%" style="stop-color:#FFC56E;stop-opacity:1" />
+                  <stop offset="55%" style="stop-color:#FF9500;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#D97E00;stop-opacity:1" />
+                </radialGradient>
+              </defs>
+              <rect x="4" y="4" width="64" height="64" rx="15" fill="url(#lgIconBgL)"/>
+              <rect x="23.2" y="19.36" width="7.04" height="33.28" rx="3.52" fill="#FFFFFF"/>
+              <rect x="23.2" y="19.36" width="24.32" height="7.04" rx="3.52" fill="#FFFFFF"/>
+              <rect x="23.2" y="32.8" width="18.56" height="7.04" rx="3.52" fill="#FFFFFF" opacity="0.6"/>
+              <circle cx="46.88" cy="48.16" r="4.48" fill="url(#lgIconOrbL)"/>
+              <text x="84" y="45" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="32" font-weight="600" letter-spacing="-0.6" fill="#1D1D1F">Fortuneer</text>
+            </svg>
           </div>
-          <div class="logo-label">Dark Background — Preferred</div>
+          <div class="logo-label">Light Background — Preferred</div>
+        </div>
+        <div>
+          <div class="logo-card dark">
+            <svg width="200" height="72" viewBox="0 0 300 72">
+              <defs>
+                <linearGradient id="lgIconBgD" x1="10%" y1="0%" x2="70%" y2="100%">
+                  <stop offset="0%" style="stop-color:#1187F1;stop-opacity:1" />
+                  <stop offset="55%" style="stop-color:#0071E3;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#005BB8;stop-opacity:1" />
+                </linearGradient>
+                <radialGradient id="lgIconOrbD" cx="32%" cy="28%" r="75%">
+                  <stop offset="0%" style="stop-color:#FFC56E;stop-opacity:1" />
+                  <stop offset="55%" style="stop-color:#FF9F0A;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#D97E00;stop-opacity:1" />
+                </radialGradient>
+              </defs>
+              <rect x="4" y="4" width="64" height="64" rx="15" fill="url(#lgIconBgD)"/>
+              <rect x="23.2" y="19.36" width="7.04" height="33.28" rx="3.52" fill="#FFFFFF"/>
+              <rect x="23.2" y="19.36" width="24.32" height="7.04" rx="3.52" fill="#FFFFFF"/>
+              <rect x="23.2" y="32.8" width="18.56" height="7.04" rx="3.52" fill="#FFFFFF" opacity="0.6"/>
+              <circle cx="46.88" cy="48.16" r="4.48" fill="url(#lgIconOrbD)"/>
+              <text x="84" y="45" font-family="-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif" font-size="32" font-weight="600" letter-spacing="-0.6" fill="#F5F5F7">Fortuneer</text>
+            </svg>
+          </div>
+          <div class="logo-label">Dark Background</div>
+        </div>
+      </div>
+
+      <div class="subsection-label">App Icon / Favicon</div>
+      <div class="logo-grid">
+        <div>
+          <div class="logo-card light">
+            <svg width="72" height="72" viewBox="0 0 512 512">
+              <defs>
+                <linearGradient id="appIconBg" x1="10%" y1="0%" x2="70%" y2="100%">
+                  <stop offset="0%" style="stop-color:#1187F1;stop-opacity:1" />
+                  <stop offset="55%" style="stop-color:#0071E3;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#005BB8;stop-opacity:1" />
+                </linearGradient>
+                <radialGradient id="appIconOrb" cx="32%" cy="28%" r="75%">
+                  <stop offset="0%" style="stop-color:#FFC56E;stop-opacity:1" />
+                  <stop offset="55%" style="stop-color:#FF9500;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#D97E00;stop-opacity:1" />
+                </radialGradient>
+              </defs>
+              <rect width="512" height="512" rx="113" fill="url(#appIconBg)"/>
+              <rect x="154" y="123" width="56" height="266" rx="28" fill="#FFFFFF"/>
+              <rect x="154" y="123" width="195" height="56" rx="28" fill="#FFFFFF"/>
+              <rect x="154" y="230" width="148" height="56" rx="28" fill="#FFFFFF" opacity="0.6"/>
+              <circle cx="343" cy="353" r="36" fill="url(#appIconOrb)"/>
+            </svg>
+          </div>
+          <div class="logo-label">F Monogram — app icon · favicon</div>
         </div>
         <div>
           <div class="logo-card light">
-            <div class="logo-text-light">FORT<span>UNEER</span></div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="width:11px; height:11px; border-radius:50%; background:radial-gradient(circle at 32% 28%, #FFC56E, #FF9500 55%, #D97E00);"></div>
+              <span style="font-size:20px; font-weight:600; letter-spacing:-0.02em; color:#1D1D1F;">Fortuneer</span>
+            </div>
           </div>
-          <div class="logo-label">Light Background</div>
+          <div class="logo-label">Compact Wordmark — in-product nav</div>
         </div>
       </div>
     </div>
@@ -484,7 +697,7 @@
       </div>
     </div>
 
-    <div class="footer">FORTUNEER · BRAND STYLE GUIDE · V1.0 · CONFIDENTIAL</div>
+    <div class="footer">FORTUNEER · BRAND STYLE GUIDE · V2.0 · CONFIDENTIAL</div>
   </div>
 </body>
 </html>

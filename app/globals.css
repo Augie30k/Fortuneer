@@ -170,3 +170,23 @@
     transform: translateX(-50%);
   }
 }
+
+/* Auth hero graphic (HeroGraphic component): gentle float on the ring and orbs. */
+@keyframes ft-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+@keyframes ft-float-sm {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
