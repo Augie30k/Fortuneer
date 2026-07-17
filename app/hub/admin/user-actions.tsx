@@ -8,6 +8,7 @@ import { logEvent } from '@/lib/admin-log'
 import { resend } from '@/lib/resend'
 import { fromAddress } from '@/lib/postmaster'
 import WelcomeEmail from '@/emails/welcome-email'
+import DenialEmail from '@/emails/denial-email'
 
 /** User-status actions shared by the Admin overview (pending queue) and the
  *  Users page — both render approve/deny/block buttons against the same flow. */
@@ -75,6 +76,91 @@ export async function setUserStatus(formData: FormData) {
   }
 
   revalidateUsers()
+}
+
+/** Deny a pending request: the applicant is notified by email *before* the
+ *  status flips to blocked (gated like approvals — no silent denials), and
+ *  the address can optionally be quarantined so it can't sign up again. */
+export async function denyUser(formData: FormData) {
+  if (!adminEnabled()) throw new Error('The Hub is disabled')
+
+  const userId = String(formData.get('userId') ?? '')
+  const quarantine = formData.get('quarantine') === 'on'
+  if (!userId) return
+
+  const env = await getAdminEnv()
+  const supabase = createAdminClientFor(env)
+
+  const { data: profile, error: fetchError } = await supabase
+    .from('profiles')
+    .select('status, email, full_name')
+    .eq('id', userId)
+    .single()
+  if (fetchError) throw new Error(`Failed to load user: ${fetchError.message}`)
+
+  if (profile.email) {
+    const { error: sendError } = await resend.emails.send({
+      from: fromAddress('denial', env),
+      to: profile.email,
+      subject: 'About your Fortuneer request',
+      react: <DenialEmail fullName={profile.full_name} />,
+    })
+    if (sendError) {
+      await logEvent('error', 'admin.denyUser', `Denial email failed, deny aborted: ${sendError.message}`, { userId })
+      throw new Error(`Failed to send denial email — user was NOT denied: ${sendError.message}`)
+    }
+  }
+
+  const { error } = await supabase.from('profiles').update({ status: 'blocked' }).eq('id', userId)
+  if (error) throw new Error(`Failed to deny user: ${error.message}`)
+
+  if (quarantine && profile.email) {
+    const { error: qError } = await supabase
+      .from('quarantined_emails')
+      .upsert(
+        { email: profile.email.toLowerCase(), reason: 'Denied access request' },
+        { onConflict: 'email', ignoreDuplicates: true }
+      )
+    if (qError) throw new Error(`User denied, but quarantining failed: ${qError.message}`)
+  }
+
+  await supabase.from('admin_events').insert({
+    level: 'info',
+    source: 'hub.denyUser',
+    message: `Denied ${profile.email ?? userId}${quarantine ? ' and quarantined the email' : ''}`,
+    context: { userId, quarantine },
+  })
+
+  revalidateUsers()
+}
+
+/** Bar an address from signing up, independent of any existing account. */
+export async function addQuarantinedEmail(formData: FormData) {
+  if (!adminEnabled()) throw new Error('The Hub is disabled')
+
+  const email = String(formData.get('email') ?? '').trim().toLowerCase()
+  if (!email) return
+
+  const supabase = createAdminClientFor(await getAdminEnv())
+  const { error } = await supabase
+    .from('quarantined_emails')
+    .upsert({ email, reason: 'Added manually' }, { onConflict: 'email', ignoreDuplicates: true })
+  if (error) throw new Error(`Failed to quarantine ${email}: ${error.message}`)
+
+  revalidatePath('/hub/admin/users')
+}
+
+export async function removeQuarantinedEmail(formData: FormData) {
+  if (!adminEnabled()) throw new Error('The Hub is disabled')
+
+  const email = String(formData.get('email') ?? '')
+  if (!email) return
+
+  const supabase = createAdminClientFor(await getAdminEnv())
+  const { error } = await supabase.from('quarantined_emails').delete().eq('email', email)
+  if (error) throw new Error(`Failed to remove ${email} from quarantine: ${error.message}`)
+
+  revalidatePath('/hub/admin/users')
 }
 
 export async function setUserVeraBlocked(formData: FormData) {

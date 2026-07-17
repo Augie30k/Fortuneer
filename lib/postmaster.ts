@@ -9,11 +9,14 @@ import type { AdminEnv } from '@/lib/supabase-admin'
 const EMAIL_DOMAIN = 'fortuneer.app'
 const DISPLAY_NAME = 'Fortuneer'
 
-/** kind → local part of the address; keys double as the public API. */
+/** kind → local part of the address; keys double as the public API.
+ *  Kinds may share an address (denial goes out as support@ so people can
+ *  reply to a human). */
 const SENDERS = {
   welcome: 'welcome',
   support: 'support',
   broadcast: 'broadcast',
+  denial: 'support',
 } as const
 
 export type EmailKind = keyof typeof SENDERS

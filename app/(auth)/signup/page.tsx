@@ -46,6 +46,23 @@ export default function SignupPage() {
     }
 
     setLoading(true)
+
+    // Quarantined addresses get a clear message up front; on any check
+    // failure we fall through — the database trigger still blocks them.
+    try {
+      const res = await fetch('/api/auth/signup-allowed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const { allowed } = await res.json()
+      if (allowed === false) {
+        setError('email-not-allowed')
+        setLoading(false)
+        return
+      }
+    } catch {}
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -55,7 +72,9 @@ export default function SignupPage() {
       options: { emailRedirectTo: `${window.location.origin}/login` },
     })
     if (error) {
-      setError(error.message)
+      // A quarantined email that slipped past the pre-check hits the
+      // database trigger, which GoTrue surfaces as this generic message.
+      setError(error.message.includes('Database error saving new user') ? 'email-not-allowed' : error.message)
       setLoading(false)
       return
     }
@@ -113,6 +132,8 @@ export default function SignupPage() {
                   </Link>
                   .
                 </>
+              ) : error === 'email-not-allowed' ? (
+                'This email address can’t be used to sign up.'
               ) : (
                 error
               )}

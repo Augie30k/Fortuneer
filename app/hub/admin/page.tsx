@@ -5,7 +5,8 @@ import { formatDate } from '@/lib/format'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { HubStat } from '../hub-stat'
-import { setUserStatus } from './user-actions'
+import { setUserStatus, denyUser } from './user-actions'
+import { DenyUserDialog } from './deny-user-dialog'
 
 export const dynamic = 'force-dynamic'
 
@@ -70,7 +71,7 @@ export default async function AdminOverviewPage() {
                   <td className="py-2 pr-4">
                     <div className="flex gap-2">
                       <QueueButton userId={u.id} status="active" label="Approve" />
-                      <QueueButton userId={u.id} status="blocked" label="Deny" />
+                      <DenyUserDialog userId={u.id} email={u.email ?? u.id} action={denyUser} />
                     </div>
                   </td>
                 </tr>
@@ -85,7 +86,10 @@ export default async function AdminOverviewPage() {
             </tbody>
           </table>
         </Card>
-        <p className="text-xs text-muted-foreground">Approving sends the welcome email before the status flips.</p>
+        <p className="text-xs text-muted-foreground">
+          Approving sends the welcome email before the status flips; denying emails the applicant
+          and can quarantine the address.
+        </p>
       </div>
 
       <div className="space-y-2">

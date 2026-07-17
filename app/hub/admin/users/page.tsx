@@ -3,11 +3,19 @@ import { createAdminClientFor } from '@/lib/supabase-admin'
 import { getAdminEnv } from '@/lib/admin'
 import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
-import { Card } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { HubStat } from '../../hub-stat'
-import { setUserStatus, setUserVeraBlocked, deleteUser } from '../user-actions'
+import {
+  setUserStatus,
+  setUserVeraBlocked,
+  denyUser,
+  deleteUser,
+  addQuarantinedEmail,
+  removeQuarantinedEmail,
+} from '../user-actions'
+import { DenyUserDialog } from '../deny-user-dialog'
 import { DeleteUserButton } from './delete-user-button'
 
 export const dynamic = 'force-dynamic'
@@ -28,10 +36,12 @@ export default async function AdminUsersPage({
   const { q = '', status: statusFilter = 'all' } = await searchParams
   const supabase = createAdminClientFor(await getAdminEnv())
 
-  const [{ data: profiles, error }, { data: authData }] = await Promise.all([
-    supabase.from('profiles').select('id, email, full_name, status, vera_blocked, created_at'),
-    supabase.auth.admin.listUsers({ perPage: 1000 }),
-  ])
+  const [{ data: profiles, error }, { data: authData }, { data: quarantined, error: quarantineError }] =
+    await Promise.all([
+      supabase.from('profiles').select('id, email, full_name, status, vera_blocked, created_at'),
+      supabase.auth.admin.listUsers({ perPage: 1000 }),
+      supabase.from('quarantined_emails').select('email, reason, created_at').order('created_at', { ascending: false }),
+    ])
 
   if (error) {
     return <p className="text-sm text-red-600">Failed to load users: {error.message}</p>
@@ -61,7 +71,7 @@ export default async function AdminUsersPage({
   )
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div>
         <h1 className="text-lg font-semibold">Users</h1>
         <p className="text-sm text-muted-foreground">
@@ -107,67 +117,141 @@ export default async function AdminUsersPage({
         </form>
       </div>
 
-      <Card className="overflow-x-auto">
-        <table className="w-full text-sm border-collapse">
-          <thead>
-            <tr className="border-b text-left text-muted-foreground">
-              <th className="py-2 pr-4 pl-4 font-medium">Email</th>
-              <th className="py-2 pr-4 font-medium">Name</th>
-              <th className="py-2 pr-4 font-medium">Status</th>
-              <th className="py-2 pr-4 font-medium">Signed up</th>
-              <th className="py-2 pr-4 font-medium">Last sign-in</th>
-              <th className="py-2 pr-4 font-medium">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => {
-              const signIn = lastSignIn.get(u.id)
-              return (
-                <tr key={u.id} className="border-b last:border-0">
-                  <td className="py-2 pr-4 pl-4">{u.email ?? '—'}</td>
-                  <td className="py-2 pr-4">{u.full_name ?? '—'}</td>
-                  <td className="py-2 pr-4">
+      <div className="space-y-3">
+        {users.map((u) => {
+          const signIn = lastSignIn.get(u.id)
+          const displayName = u.full_name ?? u.email ?? 'Unknown user'
+          const initial = (u.full_name ?? u.email ?? '?').trim().charAt(0).toUpperCase()
+          return (
+            <Card key={u.id}>
+              <CardContent className="space-y-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-semibold text-primary">
+                    {initial}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium">{displayName}</p>
+                    <p className="truncate text-sm text-muted-foreground">{u.email ?? u.id}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
                     <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[u.status] ?? ''}`}>
                       {u.status}
                     </span>
-                  </td>
-                  <td className="py-2 pr-4">{formatDate(u.created_at)}</td>
-                  <td className="py-2 pr-4">{signIn ? formatDate(signIn) : 'never'}</td>
-                  <td className="py-2 pr-4">
-                    <div className="flex gap-2">
-                      {u.status !== 'active' && (
-                        <StatusButton userId={u.id} status="active" label={u.status === 'pending' ? 'Approve' : 'Reactivate'} />
+                    <span
+                      className={cn(
+                        'rounded-full px-2 py-0.5 text-xs font-medium',
+                        u.vera_blocked
+                          ? 'bg-destructive/15 text-destructive'
+                          : 'bg-secondary text-secondary-foreground'
                       )}
-                      {u.status !== 'blocked' && (
-                        <StatusButton userId={u.id} status="blocked" label={u.status === 'pending' ? 'Deny' : 'Block'} />
-                      )}
-                      <VeraToggleButton userId={u.id} blocked={u.vera_blocked} />
-                      <DeleteUserButton userId={u.id} email={u.email ?? u.id} action={deleteUser} />
+                    >
+                      {u.vera_blocked ? 'Vera blocked' : 'Vera enabled'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                  <span>Joined {formatDate(u.created_at)}</span>
+                  <span>Last sign-in {signIn ? formatDate(signIn) : 'never'}</span>
+                </div>
+
+                <div className="flex flex-wrap gap-2 border-t pt-3">
+                  {u.status === 'pending' && (
+                    <>
+                      <StatusButton userId={u.id} status="active" label="Approve" primary />
+                      <DenyUserDialog userId={u.id} email={u.email ?? u.id} action={denyUser} />
+                    </>
+                  )}
+                  {u.status === 'active' && <StatusButton userId={u.id} status="blocked" label="Block" />}
+                  {u.status === 'blocked' && <StatusButton userId={u.id} status="active" label="Reactivate" />}
+                  <VeraToggleButton userId={u.id} blocked={u.vera_blocked} />
+                  <DeleteUserButton userId={u.id} email={u.email ?? u.id} action={deleteUser} />
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })}
+        {users.length === 0 && (
+          <Card>
+            <CardContent className="py-6 text-center text-sm text-muted-foreground">
+              {all.length === 0 ? 'No users yet' : 'No users match this filter'}
+            </CardContent>
+          </Card>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <h2 className="text-sm font-semibold">Quarantine</h2>
+        <p className="text-xs text-muted-foreground">
+          Quarantined emails can&apos;t be used to sign up — enforced in the signup flow and by a
+          database trigger. Denying a request offers to quarantine automatically.
+        </p>
+        {quarantineError ? (
+          <p className="text-sm text-red-600">
+            Failed to load quarantine list: {quarantineError.message}
+            {quarantineError.message.includes('quarantined_emails') &&
+              ' — has migration 022_email_quarantine.sql been applied?'}
+          </p>
+        ) : (
+          <Card>
+            <CardContent className="space-y-3">
+              <form action={addQuarantinedEmail} className="flex flex-wrap items-center gap-2">
+                <Input
+                  type="email"
+                  name="email"
+                  required
+                  placeholder="someone@example.com"
+                  className="h-8 w-64 text-sm"
+                />
+                <Button type="submit" variant="outline" size="xs">
+                  Quarantine email
+                </Button>
+              </form>
+              <div className="divide-y">
+                {(quarantined ?? []).map((entry) => (
+                  <div key={entry.email} className="flex flex-wrap items-center gap-2 py-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{entry.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {entry.reason ?? '—'} · {formatDate(entry.created_at)}
+                      </p>
                     </div>
-                  </td>
-                </tr>
-              )
-            })}
-            {users.length === 0 && (
-              <tr>
-                <td colSpan={6} className="py-6 text-center text-muted-foreground">
-                  {all.length === 0 ? 'No users yet' : 'No users match this filter'}
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </Card>
+                    <form action={removeQuarantinedEmail}>
+                      <input type="hidden" name="email" value={entry.email} />
+                      <Button type="submit" variant="outline" size="xs">
+                        Remove
+                      </Button>
+                    </form>
+                  </div>
+                ))}
+                {(quarantined ?? []).length === 0 && (
+                  <p className="py-2 text-sm text-muted-foreground">No quarantined emails</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   )
 }
 
-function StatusButton({ userId, status, label }: { userId: string; status: string; label: string }) {
+function StatusButton({
+  userId,
+  status,
+  label,
+  primary = false,
+}: {
+  userId: string
+  status: string
+  label: string
+  primary?: boolean
+}) {
   return (
     <form action={setUserStatus}>
       <input type="hidden" name="userId" value={userId} />
       <input type="hidden" name="status" value={status} />
-      <Button type="submit" variant="outline" size="xs">
+      <Button type="submit" variant={primary ? 'default' : 'outline'} size="xs">
         {label}
       </Button>
     </form>
