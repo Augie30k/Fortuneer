@@ -9,7 +9,7 @@ import { usePalette } from '@/lib/theme'
 export default function VeraScreen() {
   const palette = usePalette()
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { backgroundColor: palette.bg }]}>
       <View style={styles.body}>
         <Text style={[styles.title, { color: palette.text }]}>Vera</Text>
         <Text style={[styles.subtitle, { color: palette.muted }]}>

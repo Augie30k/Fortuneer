@@ -11,6 +11,7 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
+import Logo from '@/components/Logo'
 import { supabase } from '@/lib/supabase'
 import { usePalette } from '@/lib/theme'
 
@@ -43,11 +44,14 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
+      style={[
+        styles.screen,
+        { backgroundColor: palette.bg, paddingTop: insets.top, paddingBottom: insets.bottom },
+      ]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.body}>
-        <Text style={[styles.brand, { color: palette.accent }]}>Fortuneer</Text>
+        <Logo size={40} style={styles.brand} />
         <Text style={[styles.subtitle, { color: palette.muted }]}>
           Sign in to your account
         </Text>
@@ -105,7 +109,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   body: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
-  brand: { fontSize: 34, fontWeight: '700', textAlign: 'center' },
+  brand: { alignSelf: 'center' },
   subtitle: { fontSize: 15, textAlign: 'center', marginTop: 6, marginBottom: 32 },
   form: { gap: 12 },
   input: {

@@ -1,7 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { effectiveBudgetsForMonth, nextMonth } from './effective-budget'
 import { goalAllocationsForMonth } from './goal-allocation'
-import { beforeMonthStart, monthBounds } from './goal-contributions'
+import { beforeMonthStart } from './goal-contributions'
+import { monthBounds } from './budget-math'
 import { monthsThrough } from './goal-math'
 
 // Server-side counterpart to lib/goal-math.ts's liveGoalAutoSaveAmounts:

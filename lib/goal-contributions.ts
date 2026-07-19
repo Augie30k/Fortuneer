@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { monthBounds } from './budget-math'
 
 /**
  * Apply a signed contribution (positive = add, negative = withdraw) to a
@@ -54,14 +55,6 @@ export async function recordGoalContribution(
 export function beforeMonthStart(month: string): string {
   const { start } = monthBounds(month)
   return new Date(new Date(`${start}T00:00:00Z`).getTime() - 1000).toISOString()
-}
-
-/** "YYYY-MM" -> [start, end) date bounds for a calendar month */
-export function monthBounds(month: string): { start: string; end: string } {
-  const [y, m] = month.split('-').map(Number)
-  const start = `${month}-01`
-  const end = new Date(y, m, 1).toISOString().slice(0, 10)
-  return { start, end }
 }
 
 /** Sum of contributions per goal within `month` ('YYYY-MM') */

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase-server'
 import { NextResponse } from 'next/server'
 import { effectiveBudgetsForMonth } from '@/lib/effective-budget'
+import { computeMonthActuals, monthBounds, type BudgetTxnRow } from '@/lib/budget-math'
 import { setBudgetAmount, setBudgetCadence, type BudgetCadence } from '@/lib/budget-write'
 
 const CADENCES: BudgetCadence[] = ['quarterly', 'semiannual', 'annual']
@@ -22,9 +23,7 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const month = searchParams.get('month') ?? new Date().toISOString().slice(0, 7)
-    const [y, m] = month.split('-').map(Number)
-    const start = `${month}-01`
-    const end = new Date(y, m, 1).toISOString().slice(0, 10)
+    const { start, end } = monthBounds(month)
 
     const [budgetsResult, txResult] = await Promise.all([
       supabase
@@ -43,26 +42,13 @@ export async function GET(request: Request) {
     if (budgetsResult.error) throw budgetsResult.error
     if (txResult.error) throw txResult.error
 
-    // Per-category actual amount for this month. Expense categories track
-    // outflows (amount > 0); the Income category tracks inflows (amount < 0)
-    // so its budget row can show "received so far" against a monthly target,
-    // just like any other category. Transfers never count either way.
-    const spendByCategory = new Map<string, number>()
-    let income = 0
-    for (const t of txResult.data ?? []) {
-      const cat = t.categories as unknown as { is_income?: boolean; is_transfer?: boolean } | null
-      if (cat?.is_transfer) continue
-      const amount = Number(t.amount)
-      if (cat?.is_income) {
-        if (amount >= 0) continue
-        income += -amount
-        if (t.category_id) {
-          spendByCategory.set(t.category_id, (spendByCategory.get(t.category_id) ?? 0) + -amount)
-        }
-      } else if (amount > 0 && t.category_id) {
-        spendByCategory.set(t.category_id, (spendByCategory.get(t.category_id) ?? 0) + amount)
-      }
-    }
+    const { spendByCategory, income } = computeMonthActuals(
+      (txResult.data ?? []).map((t) => ({
+        category_id: t.category_id,
+        amount: t.amount,
+        category: t.categories as unknown as BudgetTxnRow['category'],
+      }))
+    )
 
     const effective = effectiveBudgetsForMonth(budgetsResult.data ?? [], month)
 
