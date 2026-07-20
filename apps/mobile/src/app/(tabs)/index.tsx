@@ -13,6 +13,7 @@ import {
 
 import TransactionRow from '@/components/TransactionRow'
 import { CashFlowBars, LineAreaChart } from '@/components/charts'
+import SpendPaceGauge from '@/components/SpendPaceGauge'
 import {
   Card,
   EmptyState,
@@ -141,30 +142,34 @@ export default function DashboardScreen() {
                 {formatCurrency(data.prevMonthIncome)} last month
               </Text>
             </Card>
-            <Card style={styles.tile}>
-              <Text style={[styles.tileLabel, { color: palette.muted }]}>Spending</Text>
-              <Text style={[styles.tileValue, { color: palette.text }]} numberOfLines={1}>
-                {formatCurrency(data.monthlySpending)}
-              </Text>
-              {spendDelta != null ? (
-                <View style={styles.deltaRow}>
-                  <SymbolView
-                    name={spendDelta > 0 ? 'arrow.up.right' : 'arrow.down.right'}
-                    size={11}
-                    tintColor={spendDelta > 0 ? palette.danger : palette.positive}
-                  />
-                  <Text
-                    style={[
-                      styles.tileDelta,
-                      { color: spendDelta > 0 ? palette.danger : palette.positive },
-                    ]}
-                  >
-                    {Math.abs(spendDelta * 100).toFixed(0)}% vs this time last month
-                  </Text>
-                </View>
-              ) : (
-                <Text style={[styles.tileDelta, { color: palette.faint }]}>this month</Text>
-              )}
+            <Card style={[styles.tile, styles.tileRowLayout]}>
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={[styles.tileLabel, { color: palette.muted }]}>Spending</Text>
+                <Text style={[styles.tileValue, { color: palette.text }]} numberOfLines={1}>
+                  {formatCurrency(data.monthlySpending)}
+                </Text>
+                {spendDelta != null ? (
+                  <View style={styles.deltaRow}>
+                    <SymbolView
+                      name={spendDelta > 0 ? 'arrow.up.right' : 'arrow.down.right'}
+                      size={11}
+                      tintColor={spendDelta > 0 ? palette.danger : palette.positive}
+                    />
+                    <Text
+                      style={[
+                        styles.tileDelta,
+                        { color: spendDelta > 0 ? palette.danger : palette.positive },
+                      ]}
+                      numberOfLines={1}
+                    >
+                      {Math.abs(spendDelta * 100).toFixed(0)}% vs last month
+                    </Text>
+                  </View>
+                ) : (
+                  <Text style={[styles.tileDelta, { color: palette.faint }]}>this month</Text>
+                )}
+              </View>
+              <SpendPaceGauge delta={spendDelta} />
             </Card>
           </View>
 
@@ -353,6 +358,7 @@ const styles = StyleSheet.create({
   emptyChart: { fontSize: 13, textAlign: 'center', paddingVertical: 24, lineHeight: 19 },
   tileRow: { flexDirection: 'row', gap: 10, marginTop: 12 },
   tile: { flex: 1 },
+  tileRowLayout: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 6 },
   tileLabel: { fontSize: 12, fontWeight: '500' },
   tileValue: { fontSize: 20, fontWeight: '700', marginTop: 3, fontVariant: ['tabular-nums'] },
   tileDelta: { fontSize: 11, marginTop: 3 },

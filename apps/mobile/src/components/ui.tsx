@@ -9,8 +9,30 @@ import {
   type ViewStyle,
 } from 'react-native'
 import { SymbolView, type SFSymbol } from 'expo-symbols'
+import type { LucideIcon } from 'lucide-react-native'
 
 import { usePalette } from '@/lib/theme'
+
+/** Either a native SF Symbol name (OS chrome) or a lucide-react-native
+ *  component (branded nav/category/account iconography shared with web). */
+export type IconSource = SFSymbol | LucideIcon
+
+/** Renders whichever icon system `icon` belongs to. */
+export function AppIcon({
+  icon,
+  size,
+  color,
+}: {
+  icon: IconSource
+  size: number
+  color: string
+}) {
+  if (typeof icon === 'string') {
+    return <SymbolView name={icon} tintColor={color} size={size} />
+  }
+  const Icon = icon
+  return <Icon size={size} color={color} />
+}
 
 /** iOS grouped-list style card surface. */
 export function Card({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
@@ -41,13 +63,14 @@ export function Separator({ inset = 0 }: { inset?: number }) {
   )
 }
 
-/** Tinted rounded-square SF-symbol chip, iOS Settings style. */
+/** Tinted rounded-square icon chip, iOS Settings style. Accepts either an SF
+ *  Symbol name or a lucide-react-native icon component. */
 export function SymbolChip({
   symbol,
   color,
   size = 34,
 }: {
-  symbol: SFSymbol
+  symbol: IconSource
   color: string
   size?: number
 }) {
@@ -62,7 +85,7 @@ export function SymbolChip({
         backgroundColor: `${color}22`,
       }}
     >
-      <SymbolView name={symbol} tintColor={color} size={size * 0.55} />
+      <AppIcon icon={symbol} size={size * 0.55} color={color} />
     </View>
   )
 }

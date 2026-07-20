@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router'
 import { SymbolView } from 'expo-symbols'
 
 import PickerSheet from '@/components/PickerSheet'
-import { Card, ErrorBanner, Pills, PrimaryButton, SectionHeader } from '@/components/ui'
+import { AppIcon, Card, ErrorBanner, Pills, PrimaryButton, SectionHeader } from '@/components/ui'
 import { useAuth } from '@/lib/auth-context'
 import { categorySymbol } from '@/lib/category-icons'
 import { loadAccounts, loadCategories } from '@/lib/queries'
@@ -152,10 +152,10 @@ export default function NewTransactionScreen() {
             >
               {category ? (
                 <View style={styles.pickerValue}>
-                  <SymbolView
-                    name={categorySymbol(category.icon)}
+                  <AppIcon
+                    icon={categorySymbol(category.icon)}
                     size={16}
-                    tintColor={category.color ?? palette.muted}
+                    color={category.color ?? palette.muted}
                   />
                   <Text style={{ color: palette.text, fontSize: 15 }}>{category.name}</Text>
                 </View>

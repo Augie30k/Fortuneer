@@ -19,7 +19,7 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { usePathname, useRouter, type Href } from 'expo-router'
-import { SymbolView, type SFSymbol } from 'expo-symbols'
+import { LifeBuoy, LogOut, Repeat, Settings, Sparkles, Target, TrendingUp, type LucideIcon } from 'lucide-react-native'
 
 import Logo from '@/components/Logo'
 import { useAuth } from '@/lib/auth-context'
@@ -32,13 +32,15 @@ export function useSidebar() {
   return useContext(SidebarContext)
 }
 
-const ITEMS: { href: Href & string; label: string; symbol: SFSymbol }[] = [
-  { href: '/goals', label: 'Goals', symbol: 'target' },
-  { href: '/investments', label: 'Investments', symbol: 'chart.line.uptrend.xyaxis' },
-  { href: '/recurring', label: 'Recurring', symbol: 'repeat' },
-  { href: '/vera', label: 'Vera', symbol: 'sparkles' },
-  { href: '/settings', label: 'Settings', symbol: 'gearshape.fill' },
-  { href: '/support', label: 'Support', symbol: 'questionmark.circle.fill' },
+// Drawer items use lucide-react-native so they match the web sidebar's nav
+// icons exactly (same set as components/Sidebar.tsx on web).
+const ITEMS: { href: Href & string; label: string; icon: LucideIcon }[] = [
+  { href: '/goals', label: 'Goals', icon: Target },
+  { href: '/investments', label: 'Investments', icon: TrendingUp },
+  { href: '/recurring', label: 'Recurring', icon: Repeat },
+  { href: '/vera', label: 'Vera', icon: Sparkles },
+  { href: '/settings', label: 'Settings', icon: Settings },
+  { href: '/support', label: 'Support', icon: LifeBuoy },
 ]
 
 /** Slide-in navigation drawer for everything that isn't a bottom tab.
@@ -150,10 +152,9 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
                       onPress={() => go(item.href)}
                       style={[styles.item, active && { backgroundColor: palette.accentSoft }]}
                     >
-                      <SymbolView
-                        name={item.symbol}
+                      <item.icon
                         size={20}
-                        tintColor={active ? palette.accent : palette.muted}
+                        color={active ? palette.accent : palette.muted}
                       />
                       <Text
                         style={[
@@ -170,11 +171,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
               </View>
 
               <Pressable onPress={confirmSignOut} style={styles.item}>
-                <SymbolView
-                  name="rectangle.portrait.and.arrow.right"
-                  size={20}
-                  tintColor={palette.danger}
-                />
+                <LogOut size={20} color={palette.danger} />
                 <Text style={[styles.itemLabel, { color: palette.danger }]}>Sign out</Text>
               </Pressable>
             </Animated.View>

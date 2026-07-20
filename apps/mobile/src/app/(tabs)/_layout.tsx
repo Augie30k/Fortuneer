@@ -1,14 +1,17 @@
 import { Tabs, useRouter } from 'expo-router'
 import { Pressable } from 'react-native'
 import { SymbolView, type SFSymbol } from 'expo-symbols'
+import { ChartPie, Gauge, PiggyBank, Receipt, Wallet, type LucideIcon } from 'lucide-react-native'
 import type { ColorValue } from 'react-native'
 
 import { useSidebar } from '@/components/Sidebar'
 import { usePalette } from '@/lib/theme'
 
-function tabIcon(name: SFSymbol) {
+// Tab icons use lucide-react-native so they match the web sidebar's nav
+// icons exactly. Header chrome (hamburger, plus) stays on SF Symbols.
+function tabIcon(Icon: LucideIcon) {
   return ({ color }: { color: ColorValue }) => (
-    <SymbolView name={name} tintColor={color} size={26} />
+    <Icon color={color as string} size={26} />
   )
 }
 
@@ -45,17 +48,17 @@ export default function TabsLayout() {
     >
       <Tabs.Screen
         name="index"
-        options={{ title: 'Dashboard', tabBarIcon: tabIcon('house.fill') }}
+        options={{ title: 'Dashboard', tabBarIcon: tabIcon(Gauge) }}
       />
       <Tabs.Screen
         name="accounts"
-        options={{ title: 'Accounts', tabBarIcon: tabIcon('building.columns.fill') }}
+        options={{ title: 'Accounts', tabBarIcon: tabIcon(Wallet) }}
       />
       <Tabs.Screen
         name="transactions"
         options={{
           title: 'Transactions',
-          tabBarIcon: tabIcon('list.bullet.rectangle.fill'),
+          tabBarIcon: tabIcon(Receipt),
           headerRight: () => (
             <HeaderButton symbol="plus" onPress={() => router.push('/transaction/new')} />
           ),
@@ -63,11 +66,11 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="budgets"
-        options={{ title: 'Budgets', tabBarIcon: tabIcon('chart.pie.fill') }}
+        options={{ title: 'Budgets', tabBarIcon: tabIcon(PiggyBank) }}
       />
       <Tabs.Screen
         name="reports"
-        options={{ title: 'Reports', tabBarIcon: tabIcon('chart.bar.xaxis') }}
+        options={{ title: 'Reports', tabBarIcon: tabIcon(ChartPie) }}
       />
     </Tabs>
   )

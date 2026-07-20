@@ -2,8 +2,9 @@ import { DarkTheme, DefaultTheme, ThemeProvider, Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import * as SplashScreen from 'expo-splash-screen'
 import * as SystemUI from 'expo-system-ui'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
+import AnimatedSplash from '@/components/AnimatedSplash'
 import { SidebarProvider } from '@/components/Sidebar'
 import { AuthProvider, useAuth } from '@/lib/auth-context'
 import { ThemeModeProvider, usePalette } from '@/lib/theme'
@@ -32,14 +33,7 @@ const DarkNavTheme = {
 
 function RootNavigator() {
   const { session, loading, blocked } = useAuth()
-
-  useEffect(() => {
-    if (!loading) SplashScreen.hideAsync()
-  }, [loading])
-
-  // Keep the splash screen up until the persisted session is restored, so
-  // signed-in users never flash the login screen on cold start.
-  if (loading) return null
+  const [showSplash, setShowSplash] = useState(true)
 
   return (
     <SidebarProvider>
@@ -83,6 +77,9 @@ function RootNavigator() {
           <Stack.Screen name="login" />
         </Stack.Protected>
       </Stack>
+      {showSplash && (
+        <AnimatedSplash ready={!loading} onFinish={() => setShowSplash(false)} />
+      )}
     </SidebarProvider>
   )
 }

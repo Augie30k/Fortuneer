@@ -1,68 +1,115 @@
-import type { SFSymbol } from 'expo-symbols'
+import type { LucideIcon } from 'lucide-react-native'
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Baby,
+  Banknote,
+  Beer,
+  BookOpen,
+  Briefcase,
+  Bus,
+  CarFront,
+  Cat,
+  CircleEllipsis,
+  Clapperboard,
+  Coffee,
+  CreditCard,
+  Dumbbell,
+  Fuel,
+  Gamepad2,
+  Gift,
+  GraduationCap,
+  HandHeart,
+  HeartPulse,
+  House,
+  Landmark,
+  Laptop,
+  Music,
+  PawPrint,
+  Phone,
+  PiggyBank,
+  Pizza,
+  Plane,
+  PlugZap,
+  Receipt,
+  Scissors,
+  Shirt,
+  ShoppingBag,
+  ShoppingCart,
+  Sparkles,
+  Trees,
+  TrendingUp,
+  Tv,
+  Utensils,
+  Wallet,
+  Wine,
+  Wrench,
+} from 'lucide-react-native'
 import type { AccountType } from '@fortuneer/shared'
 
-// categories.icon stores lucide-react keys (web renders them directly).
-// Mobile maps each key to the closest SF Symbol so both platforms read the
-// same data. Keys must cover components/CategoryIcon.tsx's ICONS table.
-const CATEGORY_SYMBOLS: Record<string, SFSymbol> = {
-  'banknote': 'banknote.fill',
-  'arrow-down-left': 'arrow.down.left',
-  'arrow-up-right': 'arrow.up.right',
-  'landmark': 'building.columns.fill',
-  'receipt': 'doc.plaintext.fill',
-  'clapperboard': 'film.fill',
-  'utensils': 'fork.knife',
-  'shopping-bag': 'bag.fill',
-  'house': 'house.fill',
-  'heart-pulse': 'cross.case.fill',
-  'sparkles': 'sparkles',
-  'wrench': 'wrench.and.screwdriver.fill',
-  'hand-heart': 'heart.circle.fill',
-  'car-front': 'car.fill',
-  'plane': 'airplane',
-  'plug-zap': 'bolt.fill',
-  'circle-ellipsis': 'ellipsis.circle.fill',
-  'coffee': 'cup.and.saucer.fill',
-  'pizza': 'takeoutbag.and.cup.and.straw.fill',
-  'beer': 'mug.fill',
-  'wine': 'wineglass',
-  'shopping-cart': 'cart.fill',
-  'shirt': 'tshirt.fill',
-  'gift': 'gift.fill',
-  'gamepad': 'gamecontroller.fill',
-  'tv': 'tv',
-  'music': 'music.note',
-  'book': 'book.fill',
-  'graduation-cap': 'graduationcap.fill',
-  'baby': 'teddybear.fill',
-  'paw-print': 'pawprint.fill',
-  'cat': 'cat.fill',
-  'dumbbell': 'dumbbell.fill',
-  'scissors': 'scissors',
-  'phone': 'phone.fill',
-  'laptop': 'laptopcomputer',
-  'briefcase': 'briefcase.fill',
-  'bus': 'bus',
-  'fuel': 'fuelpump.fill',
-  'trees': 'tree.fill',
-  'piggy-bank': 'dollarsign.circle.fill',
+// categories.icon stores lucide-react keys. Mobile renders the exact same
+// lucide icon set natively via lucide-react-native, so category/account
+// iconography matches the web app pixel-for-pixel instead of approximating
+// with SF Symbols. Keys must cover components/CategoryIcon.tsx's ICONS table.
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  'banknote': Banknote,
+  'arrow-down-left': ArrowDownLeft,
+  'arrow-up-right': ArrowUpRight,
+  'landmark': Landmark,
+  'receipt': Receipt,
+  'clapperboard': Clapperboard,
+  'utensils': Utensils,
+  'shopping-bag': ShoppingBag,
+  'house': House,
+  'heart-pulse': HeartPulse,
+  'sparkles': Sparkles,
+  'wrench': Wrench,
+  'hand-heart': HandHeart,
+  'car-front': CarFront,
+  'plane': Plane,
+  'plug-zap': PlugZap,
+  'circle-ellipsis': CircleEllipsis,
+  'coffee': Coffee,
+  'pizza': Pizza,
+  'beer': Beer,
+  'wine': Wine,
+  'shopping-cart': ShoppingCart,
+  'shirt': Shirt,
+  'gift': Gift,
+  'gamepad': Gamepad2,
+  'tv': Tv,
+  'music': Music,
+  'book': BookOpen,
+  'graduation-cap': GraduationCap,
+  'baby': Baby,
+  'paw-print': PawPrint,
+  'cat': Cat,
+  'dumbbell': Dumbbell,
+  'scissors': Scissors,
+  'phone': Phone,
+  'laptop': Laptop,
+  'briefcase': Briefcase,
+  'bus': Bus,
+  'fuel': Fuel,
+  'trees': Trees,
+  'piggy-bank': PiggyBank,
 }
 
-export function categorySymbol(icon: string | null | undefined): SFSymbol {
-  return (icon && CATEGORY_SYMBOLS[icon]) || 'ellipsis.circle.fill'
+export function categorySymbol(icon: string | null | undefined): LucideIcon {
+  return (icon && CATEGORY_ICONS[icon]) || CircleEllipsis
 }
 
-// Mirrors web lib/account-types.ts TYPE_META (which is lucide-bound and so
-// can't be shared directly).
+// Mirrors web lib/account-types.ts TYPE_META — same lucide icons and colors,
+// so account-type iconography matches the web app exactly.
 export const ACCOUNT_TYPE_META: Record<
   AccountType,
-  { label: string; symbol: SFSymbol; color: string }
+  { label: string; symbol: LucideIcon; color: string }
 > = {
-  depository: { label: 'Cash', symbol: 'banknote.fill', color: '#248A3D' },
-  credit: { label: 'Credit cards', symbol: 'creditcard.fill', color: '#FF9500' },
-  investment: { label: 'Investments', symbol: 'chart.line.uptrend.xyaxis', color: '#0071E3' },
-  loan: { label: 'Loans', symbol: 'building.columns.fill', color: '#AF52DE' },
-  other: { label: 'Other', symbol: 'wallet.pass.fill', color: '#8E8E93' },
+  depository: { label: 'Cash', symbol: Banknote, color: '#248A3D' },
+  credit: { label: 'Credit cards', symbol: CreditCard, color: '#FF9500' },
+  investment: { label: 'Investments', symbol: TrendingUp, color: '#0071E3' },
+  loan: { label: 'Loans', symbol: Landmark, color: '#AF52DE' },
+  other: { label: 'Other', symbol: Wallet, color: '#8E8E93' },
 }
 
 export const ACCOUNT_TYPE_ORDER: AccountType[] = [

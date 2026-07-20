@@ -1,15 +1,15 @@
 import { FlatList, Modal, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { SymbolView, type SFSymbol } from 'expo-symbols'
+import { SymbolView } from 'expo-symbols'
 
 import { usePalette } from '@/lib/theme'
-import { SymbolChip } from './ui'
+import { SymbolChip, type IconSource } from './ui'
 
 export interface PickerOption {
   key: string
   label: string
   sublabel?: string
-  symbol?: SFSymbol
+  symbol?: IconSource
   color?: string
 }
 
