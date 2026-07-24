@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react'
+import { router } from 'expo-router'
 import {
   Alert,
+  Pressable,
   KeyboardAvoidingView,
   Platform,
   RefreshControl,
@@ -121,6 +123,10 @@ export default function SettingsScreen() {
           </View>
           <Separator />
           <FactRow label="Version" value={version} />
+          <Separator />
+          <Pressable onPress={() => router.push('/terms')}>
+            <Text style={{ fontSize: 15, color: palette.accent }}>Terms &amp; Conditions</Text>
+          </Pressable>
         </Card>
 
         <Text style={[styles.footnote, { color: palette.faint }]}>

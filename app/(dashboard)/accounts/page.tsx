@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useCallback, useEffect, useMemo, useState, type SyntheticEvent } from 'react'
 import { toast } from 'sonner'
 import {
+  Calculator,
   Eye,
   EyeOff,
   Landmark,
@@ -21,6 +22,7 @@ import { cn } from '@/lib/utils'
 import { TYPE_META, TYPE_ORDER, LIABILITY_TYPES } from '@/lib/account-types'
 import { ApyFields } from '@/components/AccountTypeControls'
 import ConnectAccountDialog from '@/components/ConnectAccountDialog'
+import DebtPayoffSimulator from '@/components/DebtPayoffSimulator'
 import NetWorthChart from '@/components/charts/NetWorthChart'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -94,6 +96,7 @@ export default function AccountsPage() {
   const [editing, setEditing] = useState<AccountWithItem | null>(null)
   const [confirmDisconnect, setConfirmDisconnect] = useState<AccountWithItem | null>(null)
   const [showHidden, setShowHidden] = useState(false)
+  const [simulating, setSimulating] = useState<AccountType | null>(null)
 
   const [view, setView] = useState('networth')
   const [range, setRange] = useState('6m')
@@ -261,6 +264,7 @@ export default function AccountsPage() {
           )}
           <ConnectAccountDialog
             variant="outline"
+            compact
             onSuccess={() => {
               fetchAccounts()
               fetchHistory()
@@ -488,6 +492,18 @@ export default function AccountsPage() {
                       {LIABILITY_TYPES.has(type) ? '-' : ''}
                       {formatCurrency(total)}
                     </span>
+                    {LIABILITY_TYPES.has(type) && total > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => setSimulating(type)}
+                        aria-label={`Simulate paying off ${Meta.label.toLowerCase()}`}
+                        title="Simulate debt payoff"
+                        className="-my-1 shrink-0 text-muted-foreground"
+                      >
+                        <Calculator />
+                      </Button>
+                    )}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
@@ -644,6 +660,18 @@ export default function AccountsPage() {
           )}
         </div>
       )}
+
+      <Dialog open={!!simulating} onOpenChange={(open) => !open && setSimulating(null)}>
+        {simulating && (
+          <DebtPayoffSimulator
+            debts={visibleAccounts.filter(
+              (a) => LIABILITY_TYPES.has(a.type) && Number(a.balance) > 0
+            )}
+            defaultType={simulating}
+            onDone={() => setSimulating(null)}
+          />
+        )}
+      </Dialog>
 
       <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
         {editing && (

@@ -17,10 +17,12 @@ Money, and community feedback (r/ynab, r/MonarchMoney — July 2026).
 - 💡 Financial health score
 
 ## Accounts
-- ✅ "Connect bank" (blue, matching the app's trust/banking accent) opens a
-  picker first — bank connection (Plaid) or a manual account — instead of
-  jumping straight into the Plaid popup; the picker is where more
-  connection platforms would slot in later
+- ✅ "+ Add account" opens a picker first — bank connection (Plaid) or a
+  manual account — instead of jumping straight into the Plaid popup; the
+  picker is where more connection platforms would slot in later. Blue,
+  matching the app's trust/banking accent, as the prominent CTA on the
+  dashboard/accounts empty states; once accounts exist, the accounts page
+  toolbar shows the same button with plain styling instead
 - ✅ Plaid Link connect (sandbox), multiple institutions
 - ✅ Institution logos (fetched from Plaid at link time) on account rows
 - ✅ Grouped by type (Cash / Credit / Investments / Loans / Other)
@@ -180,6 +182,26 @@ Money, and community feedback (r/ynab, r/MonarchMoney — July 2026).
 - ✅ Income / expenses / net summary tiles
 - 💡 Shareable reports with hidden amounts (Monarch-style)
 
+## Projections
+- ✅ Life-trajectory simulator (web `/projections`, mobile via sidebar):
+  three-step flow — baseline seeded from real accounts & cash-flow history,
+  a life-event timeline, then the rendered trajectory
+- ✅ Uncertainty fan chart (conservative / expected / optimistic bands from
+  a return spread, blue→violet gradient path), one shared deterministic
+  engine (`lib/projection-math.ts`) so web and mobile agree exactly
+- ✅ Life-event library: home (with appreciating asset), child, raise, car,
+  wedding, career break, business, trip, windfall, move, debt payoff,
+  retirement, custom — plain-language editors with money-in/out toggles,
+  no signed-number conventions
+- ✅ Milestone detection: $50K…$5M crossings, financial independence
+  (25× annual spending), negative-dip warning — pinned to the chart
+- ✅ "What each choice is worth": per-event net-worth impact at the horizon
+  (simulated with vs. without the event)
+- ✅ Saved scenarios with autosave (come back anytime), multiple scenarios
+  with side-by-side compare overlay, age-axis toggle
+- 💡 Monte Carlo bands / historical-sequence stress tests
+- 💡 Goal + recurring integration (pull planned goals in as events)
+
 ## Settings
 - ✅ Organized into tabs: Account / Categories & rules / Connections & data
 - ✅ Profile (name, currency preference) with explicit edit mode
@@ -226,10 +248,37 @@ Money, and community feedback (r/ynab, r/MonarchMoney — July 2026).
 - 🔜 Transaction recategorization tool, spending insights digests
 
 ## Platform
+- ✅ First-login onboarding (`/welcome`): before the app renders for a brand-new
+  account, a short personalization flow asks what to call you, why you're
+  here (debt / saving / budgeting / overview / investing), which areas to put
+  front and center, an optional first goal (created for real on the Goals
+  page), and light/dark theme (applied live). Built around what finance-app
+  users actually ask for: every step skippable ("Skip for now" always
+  visible), no bank login requested, each question says why it's asked, and
+  under a minute end to end. Choices personalize the app — time-of-day
+  greeting with your name on the Dashboard, chosen focus areas bubble to the
+  top of the sidebar and mobile tab bar, persona-tailored "start here" link
+  while the dashboard is empty — and everything is editable later in Settings
+- ✅ Sidebar rearranging in Settings (Account → Sidebar): pin/unpin up to 3
+  focus areas anytime, not just at onboarding — saved instantly and the
+  sidebar reorders on the spot (pick order = display order)
 - ✅ Apple-style light/dark theme, responsive
 - ✅ Forgot/reset password
 - ✅ Signup validates the email isn't already registered, with a live
-  password-match/length checklist and a show/hide toggle
+  strong-password checklist (length + uppercase/lowercase/number, not just an
+  8-character minimum), password-match indicator, and a show/hide toggle.
+  Password reset shares the same strength requirements (`lib/password.ts`)
+- ✅ Terms & Conditions (`/terms`, public): full liability coverage — not
+  financial advice, projections/Vera are estimates, third-party (Plaid) data
+  disclaimers, and explicit authorization of every Hub control (approval
+  queue, deny/quarantine, block, per-user or global Vera disable, kill
+  switches, deletion). Acceptance is required and versioned: a signup
+  checkbox stamps it via auth metadata, and the proxy routes anyone without
+  the current version (existing users, or after a version bump) through a
+  blocking `/terms/accept` screen. The terms text itself is shared data
+  (`lib/terms.ts` via `@fortuneer/shared`): mobile renders the identical
+  terms, gates via auth-context (only the terms screen is reachable until
+  accepted), and keeps them readable from Settings afterwards
 - ✅ Modern calendar date picker across all forms
 - ✅ Plaid webhooks for automatic syncs (in addition to manual + on-connect)
 - 🔜 PWA manifest for installable mobile app

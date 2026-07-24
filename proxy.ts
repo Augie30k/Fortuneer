@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { clientFromHeader, getFlag, FORTUNEER_CLIENT_HEADER } from '@/lib/admin-flags'
+import { hasAcceptedCurrentTerms } from '@/lib/terms'
 
 export async function proxy(request: NextRequest) {
   // Local-only Hub (and the old /admin URLs that redirect into it):
@@ -72,14 +73,18 @@ export async function proxy(request: NextRequest) {
 
   // Access gate: signups start as 'pending' until the admin approves, and the
   // admin can block an account. Non-active users only get /account-status and
-  // sign-out. Fails open if the status column is missing (pre-migration-019).
+  // sign-out. Only a genuinely pre-migration-019 database (no status column
+  // at all) fails open — a missing profile row or any other query error
+  // fails closed (treated as pending) so an unapproved/deleted account can
+  // never slip through on a bad read.
   if (user && pathname !== '/api/auth/logout') {
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('status')
+      .select('status, terms_accepted_at, terms_version')
       .eq('id', user.id)
       .single()
-    const status = profile?.status ?? 'active'
+    const statusColumnMissing = profileError?.code === '42703'
+    const status = statusColumnMissing ? 'active' : (profile?.status ?? 'pending')
 
     if (status !== 'active') {
       if (isApi) {
@@ -90,6 +95,18 @@ export async function proxy(request: NextRequest) {
       }
       const url = request.nextUrl.clone()
       url.pathname = '/account-status'
+      return NextResponse.redirect(url)
+    }
+
+    // Terms gate: every user must have accepted the current Terms version
+    // (existing users, and everyone again when TERMS_VERSION bumps). Pages
+    // only — API calls mid-session (and the mobile app's requests) keep
+    // working; the gate catches the next navigation. Fails open if the terms
+    // columns are missing (pre-migration-025 the select above errors and
+    // profile is null).
+    if (!isApi && profile && !hasAcceptedCurrentTerms(profile)) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/terms/accept'
       return NextResponse.redirect(url)
     }
   }
@@ -107,6 +124,8 @@ export const config = {
     '/recurring/:path*',
     '/investments/:path*',
     '/reports/:path*',
+    '/projections/:path*',
+    '/welcome/:path*',
     '/settings/:path*',
     '/vera/:path*',
     '/support/:path*',

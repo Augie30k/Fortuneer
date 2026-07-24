@@ -78,6 +78,126 @@ function shortDate(date: string) {
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
+/** Projection fan: an uncertainty band between the conservative and
+ *  optimistic paths, the expected line on top, and life events pinned to
+ *  it as colored dots. Mirrors the web TrajectoryChart. */
+export function FanChart({
+  points,
+  events = [],
+  height = 190,
+  ageBase = null,
+}: {
+  points: { month: string; expected: number; low: number; high: number }[]
+  /** Colored markers pinned to the expected path at their start month */
+  events?: { month: string; color: string }[]
+  height?: number
+  /** When set, first/last labels read as ages instead of years */
+  ageBase?: number | null
+}) {
+  const palette = usePalette()
+  const [width, setWidth] = useState(0)
+
+  const onLayout = (e: LayoutChangeEvent) => setWidth(e.nativeEvent.layout.width)
+
+  if (points.length < 2) return null
+
+  // Downsample long horizons so the paths stay light
+  const stride = Math.max(1, Math.floor(points.length / 140))
+  const ps = points.filter((_, i) => i % stride === 0 || i === points.length - 1)
+
+  const min = Math.min(...ps.map((p) => p.low), 0)
+  const max = Math.max(...ps.map((p) => p.high))
+  const span = max - min || 1
+  const padTop = 8
+  const padBottom = 8
+  const chartH = height - padTop - padBottom
+
+  const x = (i: number) => (i / (ps.length - 1)) * width
+  const y = (v: number) => padTop + (1 - (v - min) / span) * chartH
+
+  let expectedPath = `M ${x(0)} ${y(ps[0].expected)}`
+  let highPath = `M ${x(0)} ${y(ps[0].high)}`
+  let lowBack = `L ${x(0)} ${y(ps[0].low)} Z`
+  for (let i = 1; i < ps.length; i++) {
+    expectedPath += ` L ${x(i)} ${y(ps[i].expected)}`
+    highPath += ` L ${x(i)} ${y(ps[i].high)}`
+    lowBack = `L ${x(i)} ${y(ps[i].low)} ` + lowBack
+  }
+  const bandPath = `${highPath} ${lowBack}`
+
+  const monthIndex = new Map(ps.map((p, i) => [p.month, i]))
+  const markers = events
+    .map((e) => {
+      const i = monthIndex.get(e.month) ?? ps.findIndex((p) => p.month >= e.month)
+      return i >= 0 ? { i, color: e.color } : null
+    })
+    .filter((m): m is { i: number; color: string } => m !== null)
+
+  const yearsSpan = Math.round((points.length - 1) / 12)
+  const endLabel = ageBase !== null ? `Age ${ageBase + yearsSpan}` : ps[ps.length - 1].month.slice(0, 4)
+  const startLabel = ageBase !== null ? `Age ${ageBase}` : ps[0].month.slice(0, 4)
+
+  return (
+    <View onLayout={onLayout}>
+      {width > 0 && (
+        <Svg width={width} height={height}>
+          <Defs>
+            <LinearGradient id="fan" x1="0" y1="0" x2="0" y2="1">
+              <Stop offset="0" stopColor={palette.accent} stopOpacity={0.18} />
+              <Stop offset="1" stopColor={palette.accent} stopOpacity={0.04} />
+            </LinearGradient>
+            {/* Blue → violet as the path heads into the future, matching web */}
+            <LinearGradient id="fanStroke" x1="0" y1="0" x2="1" y2="0">
+              <Stop offset="0" stopColor={palette.accent} />
+              <Stop offset="1" stopColor={palette.dark ? '#7D7AFF' : '#5E5CE6'} />
+            </LinearGradient>
+          </Defs>
+          {min < 0 && (
+            <Path
+              d={`M 0 ${y(0)} L ${width} ${y(0)}`}
+              stroke={palette.hairline}
+              strokeWidth={1}
+              strokeDasharray="4 4"
+            />
+          )}
+          <Path d={bandPath} fill="url(#fan)" />
+          <Path
+            d={expectedPath}
+            stroke="url(#fanStroke)"
+            strokeWidth={2.4}
+            fill="none"
+            strokeLinejoin="round"
+          />
+          {markers.map((m, idx) => (
+            <Circle
+              key={idx}
+              cx={x(m.i)}
+              cy={y(ps[m.i].expected)}
+              r={4.5}
+              fill={m.color}
+              stroke={palette.card}
+              strokeWidth={2}
+            />
+          ))}
+          <Circle
+            cx={x(ps.length - 1)}
+            cy={y(ps[ps.length - 1].expected)}
+            r={3.5}
+            fill={palette.dark ? '#7D7AFF' : '#5E5CE6'}
+          />
+        </Svg>
+      )}
+      <View style={styles.axisRow}>
+        <Text style={[styles.axisLabel, { color: palette.faint }]}>{startLabel}</Text>
+        <Text style={[styles.axisLabel, { color: palette.faint }]}>
+          {formatCurrencyCompact(min)} – {formatCurrencyCompact(max)}
+        </Text>
+        <Text style={[styles.axisLabel, { color: palette.faint }]}>{endLabel}</Text>
+      </View>
+    </View>
+  )
+}
+
 /** Paired income/expense bars per month. */
 export function CashFlowBars({ data, height = 120 }: { data: CashFlowMonth[]; height?: number }) {
   const palette = usePalette()

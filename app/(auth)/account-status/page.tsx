@@ -48,12 +48,16 @@ export default async function AccountStatusPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('status')
     .eq('id', user.id)
     .single()
-  const status = profile?.status ?? 'active'
+  // Mirrors proxy.ts: only a missing status column (pre-migration-019) fails
+  // open — a missing row or other error keeps the user on this page rather
+  // than bouncing them into the dashboard.
+  const statusColumnMissing = profileError?.code === '42703'
+  const status = statusColumnMissing ? 'active' : (profile?.status ?? 'pending')
   if (status === 'active') redirect('/dashboard')
 
   const sent = (await searchParams).sent === '1'

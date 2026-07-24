@@ -15,11 +15,15 @@ import {
   type BudgetWithSpend,
   type Category,
   type CategoryMetaRow,
+  type DashboardAccountRow,
   type DashboardRange,
   type DashboardSummary,
   type DashboardTxnRow,
   type Goal,
   type Holding,
+  type LifeEvent,
+  type ProjectionAssumptions,
+  type ProjectionScenario,
   type RecurringStream,
   type RecurringTxnRow,
   type ReportGroupBy,
@@ -341,6 +345,79 @@ export async function loadHoldings(): Promise<HoldingWithAccount[]> {
     .order('value', { ascending: false })
   if (error) throw error
   return (data ?? []) as HoldingWithAccount[]
+}
+
+export interface ProjectionsData {
+  /** Seed inputs for a fresh scenario (same math as web's /api/dashboard) */
+  netWorth: number
+  cashFlow: { month: string; income: number; expenses: number }[]
+  /** Most recently updated saved scenario, if any */
+  scenario: ProjectionScenario | null
+}
+
+/** Seed data + saved scenario for the Projections screen. Mirrors the web
+ *  page, which seeds from /api/dashboard and loads /api/projections. */
+export async function loadProjections(): Promise<ProjectionsData> {
+  const now = new Date()
+  const txnStart = new Date(now.getFullYear(), now.getMonth() - 11, 1).toISOString().slice(0, 10)
+
+  const [accountsRes, txnsRes, categoriesRes, scenarioRes] = await Promise.all([
+    supabase.from('accounts').select('id, type, balance').eq('hidden', false),
+    supabase.from('transactions').select('amount, date, category_id').gte('date', txnStart),
+    supabase.from('categories').select('id, name, icon, color, is_transfer, is_income'),
+    supabase
+      .from('projection_scenarios')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(1),
+  ])
+  for (const res of [accountsRes, txnsRes, categoriesRes, scenarioRes]) {
+    if (res.error) throw res.error
+  }
+
+  const summary = buildDashboardSummary({
+    accounts: (accountsRes.data ?? []) as DashboardAccountRow[],
+    transactions: (txnsRes.data ?? []) as DashboardTxnRow[],
+    snapshots: [],
+    categories: (categoriesRes.data ?? []) as CategoryMetaRow[],
+    cashFlowMonths: 12,
+    now,
+  })
+
+  return {
+    netWorth: summary.netWorth,
+    cashFlow: summary.cashFlow,
+    scenario: (scenarioRes.data?.[0] as ProjectionScenario | undefined) ?? null,
+  }
+}
+
+/** Create or update the scenario; returns the saved row. */
+export async function saveProjectionScenario(
+  userId: string,
+  scenario: {
+    id: string | null
+    name: string
+    assumptions: ProjectionAssumptions
+    events: LifeEvent[]
+  }
+): Promise<ProjectionScenario> {
+  const payload = {
+    name: scenario.name.trim().slice(0, 80) || 'My trajectory',
+    assumptions: scenario.assumptions,
+    events: scenario.events,
+    updated_at: new Date().toISOString(),
+  }
+  const query = scenario.id
+    ? supabase
+        .from('projection_scenarios')
+        .update(payload)
+        .eq('id', scenario.id)
+        .eq('user_id', userId)
+    : supabase.from('projection_scenarios').insert({ user_id: userId, ...payload })
+
+  const { data, error } = await query.select('*').single()
+  if (error) throw error
+  return data as ProjectionScenario
 }
 
 export interface SupportRequest {

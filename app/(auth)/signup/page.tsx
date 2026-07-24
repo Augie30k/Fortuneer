@@ -1,6 +1,8 @@
 'use client'
 
 import { createClient } from '@/lib/supabase-client'
+import { TERMS_VERSION } from '@/lib/terms'
+import { MIN_PASSWORD_LENGTH, PASSWORD_REQUIREMENTS, isStrongPassword } from '@/lib/password'
 import { useState, type SyntheticEvent } from 'react'
 import Link from 'next/link'
 import { Check, Eye, EyeOff, Loader2, MailCheck, X } from 'lucide-react'
@@ -16,28 +18,27 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 
-const MIN_PASSWORD_LENGTH = 8
-
 export default function SignupPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const supabase = createClient()
 
-  const longEnough = password.length >= MIN_PASSWORD_LENGTH
+  const isStrong = isStrongPassword(password)
   const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword
-  const canSubmit = email.trim().length > 0 && longEnough && passwordsMatch
+  const canSubmit = email.trim().length > 0 && isStrong && passwordsMatch && agreedToTerms
 
   const handleSignup = async (e: SyntheticEvent<HTMLFormElement>) => {
     e.preventDefault()
     setError(null)
 
-    if (!longEnough) {
-      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters`)
+    if (!isStrong) {
+      setError('Password does not meet the requirements below')
       return
     }
     if (!passwordsMatch) {
@@ -66,10 +67,19 @@ export default function SignupPage() {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      // Without this, the confirmation email falls back to the Supabase
-      // project's Site URL (localhost in dev config) regardless of where the
-      // user actually signed up.
-      options: { emailRedirectTo: `${window.location.origin}/login` },
+      options: {
+        // Without this, the confirmation email falls back to the Supabase
+        // project's Site URL (localhost in dev config) regardless of where the
+        // user actually signed up.
+        emailRedirectTo: `${window.location.origin}/login`,
+        // Terms acceptance from the required checkbox — the profile-creation
+        // trigger copies these onto the profile row (migration 025), so new
+        // signups aren't re-prompted by the /terms/accept gate.
+        data: {
+          terms_accepted_at: new Date().toISOString(),
+          terms_version: TERMS_VERSION,
+        },
+      },
     })
     if (error) {
       // A quarantined email that slipped past the pre-check hits the
@@ -92,7 +102,7 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <Card>
+      <Card className="animate-[ft-form-in_0.45s_ease-out_both]">
         <CardHeader className="items-center text-center">
           <MailCheck className="mb-2 size-10 text-primary" />
           <CardTitle className="text-2xl font-semibold">Request sent</CardTitle>
@@ -112,7 +122,7 @@ export default function SignupPage() {
   }
 
   return (
-    <Card>
+    <Card className="animate-[ft-form-in_0.45s_ease-out_both]">
       <CardHeader>
         <CardTitle className="text-2xl font-semibold">Request access</CardTitle>
         <CardDescription>
@@ -175,15 +185,23 @@ export default function SignupPage() {
               </button>
             </div>
             {password.length > 0 && (
-              <p
-                className={cn(
-                  'flex items-center gap-1 text-xs',
-                  longEnough ? 'text-positive' : 'text-muted-foreground'
-                )}
-              >
-                {longEnough ? <Check className="size-3" /> : <X className="size-3" />}
-                At least {MIN_PASSWORD_LENGTH} characters
-              </p>
+              <ul className="space-y-1">
+                {PASSWORD_REQUIREMENTS.map((req) => {
+                  const met = req.test(password)
+                  return (
+                    <li
+                      key={req.key}
+                      className={cn(
+                        'flex items-center gap-1 text-xs',
+                        met ? 'text-positive' : 'text-muted-foreground'
+                      )}
+                    >
+                      {met ? <Check className="size-3" /> : <X className="size-3" />}
+                      {req.label}
+                    </li>
+                  )
+                })}
+              </ul>
             )}
           </div>
 
@@ -210,6 +228,26 @@ export default function SignupPage() {
               </p>
             )}
           </div>
+
+          <label className="flex cursor-pointer items-start gap-2.5 text-sm">
+            <input
+              type="checkbox"
+              required
+              checked={agreedToTerms}
+              onChange={(e) => setAgreedToTerms(e.target.checked)}
+              className="mt-0.5 size-4 shrink-0 accent-primary"
+            />
+            <span className="text-muted-foreground">
+              I have read and agree to the{' '}
+              <Link
+                href="/terms"
+                target="_blank"
+                className="font-medium text-primary hover:underline"
+              >
+                Terms &amp; Conditions
+              </Link>
+            </span>
+          </label>
 
           <Button type="submit" disabled={loading || !canSubmit} className="h-10 w-full">
             {loading ? <Loader2 className="size-4 animate-spin" /> : 'Request Access'}

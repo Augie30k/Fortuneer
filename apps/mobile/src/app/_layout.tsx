@@ -32,7 +32,7 @@ const DarkNavTheme = {
 }
 
 function RootNavigator() {
-  const { session, loading, blocked } = useAuth()
+  const { session, loading, blocked, pending, termsPending } = useAuth()
   const [showSplash, setShowSplash] = useState(true)
 
   return (
@@ -40,9 +40,10 @@ function RootNavigator() {
       <Stack
         screenOptions={{ headerShown: false, headerBackButtonDisplayMode: 'minimal' }}
       >
-        <Stack.Protected guard={!!session && !blocked}>
+        <Stack.Protected guard={!!session && !blocked && !pending && !termsPending}>
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="goals" options={{ headerShown: true, title: 'Goals' }} />
+          <Stack.Screen name="projections" options={{ headerShown: true, title: 'Projections' }} />
           <Stack.Screen name="investments" options={{ headerShown: true, title: 'Investments' }} />
           <Stack.Screen name="recurring" options={{ headerShown: true, title: 'Recurring' }} />
           <Stack.Screen name="vera" options={{ headerShown: true, title: 'Vera' }} />
@@ -70,12 +71,19 @@ function RootNavigator() {
             options={{ headerShown: true, title: 'Monthly plan', presentation: 'modal' }}
           />
         </Stack.Protected>
-        <Stack.Protected guard={!!session && blocked}>
+        <Stack.Protected guard={!!session && (blocked || pending)}>
           <Stack.Screen name="blocked" />
         </Stack.Protected>
         <Stack.Protected guard={!session}>
           <Stack.Screen name="login" />
         </Stack.Protected>
+        {/* Unguarded and declared last: when termsPending turns the main
+            group off it's the only available screen (the acceptance gate),
+            and it stays reachable read-only from Settings afterwards. */}
+        <Stack.Screen
+          name="terms"
+          options={{ headerShown: true, title: 'Terms & Conditions' }}
+        />
       </Stack>
       {showSplash && (
         <AnimatedSplash ready={!loading} onFinish={() => setShowSplash(false)} />

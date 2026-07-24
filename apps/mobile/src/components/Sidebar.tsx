@@ -19,7 +19,7 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { usePathname, useRouter, type Href } from 'expo-router'
-import { LifeBuoy, LogOut, Repeat, Settings, Sparkles, Target, TrendingUp, type LucideIcon } from 'lucide-react-native'
+import { LifeBuoy, LogOut, Repeat, Settings, Sparkles, Target, Telescope, TrendingUp, type LucideIcon } from 'lucide-react-native'
 
 import Logo from '@/components/Logo'
 import { useAuth } from '@/lib/auth-context'
@@ -36,6 +36,7 @@ export function useSidebar() {
 // icons exactly (same set as components/Sidebar.tsx on web).
 const ITEMS: { href: Href & string; label: string; icon: LucideIcon }[] = [
   { href: '/goals', label: 'Goals', icon: Target },
+  { href: '/projections', label: 'Projections', icon: Telescope },
   { href: '/investments', label: 'Investments', icon: TrendingUp },
   { href: '/recurring', label: 'Recurring', icon: Repeat },
   { href: '/vera', label: 'Vera', icon: Sparkles },

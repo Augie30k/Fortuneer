@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState, type SyntheticEvent } from 'react'
 import { usePlaidLink, type PlaidLinkOnSuccessMetadata } from 'react-plaid-link'
 import { toast } from 'sonner'
-import { ArrowLeft, Check, Landmark, Loader2, Sparkles, Wallet } from 'lucide-react'
+import { ArrowLeft, Check, Landmark, Loader2, Plus, Sparkles, Wallet } from 'lucide-react'
 import type { AccountType } from '@/lib/types'
 import { LIABILITY_TYPES, SUBTYPE_OPTIONS } from '@/lib/account-types'
 import { cn } from '@/lib/utils'
@@ -27,7 +27,7 @@ import {
 type Step = 'choose' | 'manual'
 
 /**
- * "Connect bank" entry point: a picker between connection platforms (Plaid
+ * "Add account" entry point: a picker between connection platforms (Plaid
  * is the only one for now, but this is where more would slot in) and a
  * manual account — rather than jumping straight into the Plaid popup.
  */
@@ -37,6 +37,7 @@ export default function ConnectAccountDialog({
   onError,
   variant = 'default',
   className,
+  compact = false,
 }: {
   onSuccess?: () => void
   /** Fired the moment the user finishes picking a bank in Plaid Link — the
@@ -48,6 +49,10 @@ export default function ConnectAccountDialog({
   onError?: () => void
   variant?: 'default' | 'secondary' | 'outline'
   className?: string
+  /** Drops the blue trust/banking accent in favor of plain button styling —
+   *  for toolbar placements where an account already exists, as opposed to
+   *  the first-connection empty states. */
+  compact?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<Step>('choose')
@@ -126,10 +131,17 @@ export default function ConnectAccountDialog({
       <DialogTrigger asChild>
         <Button
           variant={variant}
-          className={cn('bg-[#0071E3] text-white hover:bg-[#0071E3]/90', className)}
+          className={
+            compact
+              // Outline's default hover:bg-muted is a no-op in light mode
+              // (--muted equals --background) — hover:bg-accent actually
+              // differs, so the button visibly highlights on hover.
+              ? cn('hover:bg-accent hover:text-accent-foreground', className)
+              : cn('bg-[#0071E3] text-white hover:bg-[#0071E3]/90', className)
+          }
         >
-          <Landmark />
-          Connect bank
+          <Plus />
+          Add account
         </Button>
       </DialogTrigger>
 

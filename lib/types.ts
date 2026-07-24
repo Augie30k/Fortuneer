@@ -1,12 +1,20 @@
 // Database types aligned with supabase/migrations/001_core_schema.sql
 // Money convention follows Plaid: transaction.amount > 0 is money OUT, < 0 is money IN.
 
+export type Persona = 'debt' | 'saving' | 'budgeting' | 'overview' | 'investing'
+
 export interface Profile {
   id: string
   email: string | null
   full_name: string | null
+  preferred_name: string | null
   currency: string
   status: 'pending' | 'active' | 'blocked'
+  persona: Persona | null
+  focus_areas: string[]
+  onboarded_at: string | null
+  terms_accepted_at: string | null
+  terms_version: string | null
   created_at: string
 }
 

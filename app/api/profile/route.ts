@@ -27,7 +27,9 @@ export async function GET() {
   }
 }
 
-/** PATCH /api/profile — update display name / currency preference */
+const FOCUS_AREAS = new Set(['budgets', 'goals', 'recurring', 'investments', 'reports', 'projections'])
+
+/** PATCH /api/profile — update display name / currency / sidebar focus areas */
 export async function PATCH(request: Request) {
   try {
     const supabase = await createClient()
@@ -40,8 +42,16 @@ export async function PATCH(request: Request) {
     const body = await request.json()
     const updates: Record<string, unknown> = {}
     if (typeof body.full_name === 'string') updates.full_name = body.full_name.trim() || null
+    if (typeof body.preferred_name === 'string') {
+      updates.preferred_name = body.preferred_name.trim().slice(0, 60) || null
+    }
     if (typeof body.currency === 'string' && /^[A-Z]{3}$/.test(body.currency)) {
       updates.currency = body.currency
+    }
+    if (Array.isArray(body.focus_areas)) {
+      updates.focus_areas = [
+        ...new Set(body.focus_areas.filter((a: unknown): a is string => typeof a === 'string' && FOCUS_AREAS.has(a))),
+      ].slice(0, 6)
     }
 
     if (Object.keys(updates).length === 0) {

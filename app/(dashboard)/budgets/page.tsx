@@ -10,6 +10,8 @@ import {
   projectedFinishMonth,
 } from '@/lib/goal-math'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { ArrowUpDown, Calendar, Check, ChevronLeft, ChevronRight, GripVertical, Loader2, Pencil, Plus, Settings2, Target, X } from 'lucide-react'
 import {
@@ -1295,6 +1297,7 @@ function BudgetRow({
   income?: boolean
   onAmountChange: (amount: number, perpetual: boolean, cadence?: BudgetCadence) => void
 }) {
+  const router = useRouter()
   const [editingAmount, setEditingAmount] = useState(false)
   const [amountDraft, setAmountDraft] = useState('')
   // Amount committed from the input, awaiting a scope choice
@@ -1355,16 +1358,31 @@ function BudgetRow({
         : 'color-mix(in srgb, var(--chart-1) 12%, transparent)'
 
   return (
-    <Card>
+    <Card
+      className="group/budgetcard cursor-pointer transition-colors hover:bg-accent/40 has-[[data-amount-editor]:hover]:bg-card"
+      onClick={(e) => {
+        // The card itself navigates; clicks on the amount editor (button,
+        // input) or the name link handle themselves
+        if ((e.target as HTMLElement).closest('button, input, a')) return
+        router.push(`/budgets/${budget.category_id}`)
+      }}
+    >
       <CardContent className="flex items-center gap-2">
         <CategoryIcon chip icon={budget.category?.icon} color={budget.category?.color} />
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline justify-between gap-2">
-            <p className="truncate text-sm font-medium">{budget.category?.name}</p>
+            <Link
+              href={`/budgets/${budget.category_id}`}
+              className="flex min-w-0 items-center gap-1"
+              aria-label={`View ${budget.category?.name} details and transactions`}
+            >
+              <p className="truncate text-sm font-medium">{budget.category?.name}</p>
+              <ChevronRight className="size-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover/budgetcard:opacity-100" />
+            </Link>
             <Popover open={pendingAmount != null} onOpenChange={(open) => !open && setPendingAmount(null)}>
               <PopoverAnchor asChild>
                 {editingAmount ? (
-                  <span className="flex shrink-0 items-center gap-1 text-sm tabular-nums">
+                  <span data-amount-editor className="flex shrink-0 items-center gap-1 text-sm tabular-nums">
                     <span
                       className={cn(
                         'font-semibold',
@@ -1392,10 +1410,15 @@ function BudgetRow({
                     />
                   </span>
                 ) : (
+                  // The ::before overlay enlarges the click target well past
+                  // the visible chip so a near-miss edits the amount instead
+                  // of navigating into the category page; the hover highlight
+                  // stays on the chip itself
                   <button
                     type="button"
+                    data-amount-editor
                     onClick={startEditAmount}
-                    className="shrink-0 rounded px-1.5 py-0.5 text-sm tabular-nums transition-colors hover:bg-accent"
+                    className="relative shrink-0 rounded px-1.5 py-0.5 text-sm tabular-nums transition-colors before:absolute before:-inset-x-4 before:-inset-y-3 before:content-[''] hover:bg-accent"
                     aria-label={
                       income
                         ? `Edit ${budget.category?.name} expected income`

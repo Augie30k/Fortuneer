@@ -15,6 +15,7 @@ import {
   Repeat,
   Settings,
   Target,
+  Telescope,
   TrendingUp,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -41,12 +42,34 @@ export const NAV_LINKS = [
   { href: '/recurring', label: 'Recurring', icon: Repeat },
   { href: '/investments', label: 'Investments', icon: TrendingUp },
   { href: '/reports', label: 'Reports', icon: ChartPie },
+  { href: '/projections', label: 'Projections', icon: Telescope },
 ]
 
 const COLLAPSE_KEY = 'fortuneer.sidebar.collapsed'
 
-function UserMenu({ email, compact }: { email: string; compact?: boolean }) {
-  const initials = email.slice(0, 2).toUpperCase()
+/** Focus areas chosen at onboarding bubble to the top of the nav (right after
+ *  Dashboard), in the order the user picked them; everything else keeps the
+ *  default order. */
+function orderedNavLinks(focusAreas: string[]) {
+  if (focusAreas.length === 0) return NAV_LINKS
+  const byKey = new Map(NAV_LINKS.map((l) => [l.href.slice(1), l]))
+  const focused = focusAreas
+    .map((k) => byKey.get(k))
+    .filter((l): l is (typeof NAV_LINKS)[number] => l !== undefined)
+  const rest = NAV_LINKS.slice(1).filter((l) => !focusAreas.includes(l.href.slice(1)))
+  return [NAV_LINKS[0], ...focused, ...rest]
+}
+
+function UserMenu({
+  email,
+  preferredName,
+  compact,
+}: {
+  email: string
+  preferredName?: string | null
+  compact?: boolean
+}) {
+  const initials = (preferredName?.trim() || email).slice(0, 2).toUpperCase()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -61,14 +84,26 @@ function UserMenu({ email, compact }: { email: string; compact?: boolean }) {
           </AvatarFallback>
         </Avatar>
         {!compact && (
-          <span className="min-w-0 truncate text-left text-xs text-muted-foreground">
-            {email}
+          <span className="min-w-0 flex-1 text-left">
+            {preferredName && (
+              <span className="block truncate text-xs font-medium text-foreground">
+                {preferredName}
+              </span>
+            )}
+            <span className="block truncate text-xs text-muted-foreground">{email}</span>
           </span>
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="top" className="w-56">
         <DropdownMenuLabel className="truncate font-normal text-foreground">
-          {email}
+          {preferredName ? (
+            <>
+              <span className="block truncate font-medium">{preferredName}</span>
+              <span className="block truncate text-xs text-muted-foreground">{email}</span>
+            </>
+          ) : (
+            email
+          )}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
@@ -124,13 +159,18 @@ function NavItem({
 /** Client shell: owns sidebar collapse state so the content column can follow it */
 export default function AppShell({
   email,
+  preferredName,
+  focusAreas = [],
   children,
 }: {
   email: string
+  preferredName?: string | null
+  focusAreas?: string[]
   children: React.ReactNode
 }) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const navLinks = orderedNavLinks(focusAreas)
 
   useEffect(() => {
     try {
@@ -177,7 +217,7 @@ export default function AppShell({
         </div>
 
         <nav className={cn('flex-1 space-y-1 overflow-y-auto', collapsed ? 'px-2' : 'px-3')}>
-          {NAV_LINKS.map((link) => (
+          {navLinks.map((link) => (
             <NavItem
               key={link.href}
               {...link}
@@ -207,12 +247,12 @@ export default function AppShell({
             collapsed ? 'flex-col gap-2' : 'gap-1'
           )}
         >
-          <UserMenu email={email} compact={collapsed} />
+          <UserMenu email={email} preferredName={preferredName} compact={collapsed} />
           <ThemeToggle />
         </div>
       </aside>
 
-      <MobileHeader email={email} />
+      <MobileHeader email={email} preferredName={preferredName} />
 
       <main
         className={cn(
@@ -225,12 +265,18 @@ export default function AppShell({
         </div>
       </main>
 
-      <MobileTabBar />
+      <MobileTabBar focusAreas={focusAreas} />
     </div>
   )
 }
 
-export function MobileHeader({ email }: { email: string }) {
+export function MobileHeader({
+  email,
+  preferredName,
+}: {
+  email: string
+  preferredName?: string | null
+}) {
   return (
     <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-border bg-card/70 px-4 backdrop-blur-xl md:hidden">
       <Link href="/dashboard">
@@ -238,19 +284,26 @@ export function MobileHeader({ email }: { email: string }) {
       </Link>
       <div className="flex items-center">
         <ThemeToggle />
-        <UserMenu email={email} />
+        <UserMenu email={email} preferredName={preferredName} />
       </div>
     </header>
   )
 }
 
-const MOBILE_TABS = NAV_LINKS.slice(0, 4).concat(NAV_LINKS[7]) // Dashboard, Accounts, Transactions, Budgets, Reports
-
-export function MobileTabBar() {
+export function MobileTabBar({ focusAreas = [] }: { focusAreas?: string[] }) {
   const pathname = usePathname()
+  // Dashboard, Accounts, Transactions, then the user's top focus areas
+  // (defaulting to Budgets and Reports when none were chosen)
+  const links = orderedNavLinks(focusAreas)
+  const focused = links.filter((l) => focusAreas.includes(l.href.slice(1))).slice(0, 2)
+  const tabs =
+    focused.length > 0
+      ? NAV_LINKS.slice(0, 3).concat(focused).slice(0, 5)
+      : NAV_LINKS.slice(0, 4).concat(NAV_LINKS[7]) // Budgets + Reports default
+
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-card/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden">
-      {MOBILE_TABS.map(({ href, label, icon: Icon }) => (
+      {tabs.map(({ href, label, icon: Icon }) => (
         <Link
           key={href}
           href={href}

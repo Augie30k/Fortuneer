@@ -32,6 +32,7 @@ import { CSS } from '@dnd-kit/utilities'
 import type { DashboardData, DashboardRange, Goal, RecurringStream } from '@/lib/types'
 import { formatCurrency, formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { usePersonalization } from '@/components/personalization'
 import NetWorthChart from '@/components/charts/NetWorthChart'
 import CashFlowChart from '@/components/charts/CashFlowChart'
 import SpendPaceGauge from '@/components/charts/SpendPaceGauge'
@@ -75,6 +76,24 @@ const DEFAULT_WIDGETS: { id: WidgetId; visible: boolean }[] = [
 const WIDGETS_KEY = 'fortuneer.dashboard.widgets'
 const RANGE_KEY = 'fortuneer.dashboard.range'
 
+// Where each onboarding persona is pointed while their dashboard is still
+// empty — the thing they said they came here to do
+const PERSONA_SUGGESTIONS: Record<string, { label: string; href: string }> = {
+  debt: { label: 'plan your debt payoff', href: '/projections' },
+  saving: { label: 'visit your goals', href: '/goals' },
+  budgeting: { label: 'shape your budget', href: '/budgets' },
+  overview: { label: 'explore reports', href: '/reports' },
+  investing: { label: 'set up your portfolio', href: '/investments' },
+}
+
+/** "Good morning, Augie" once onboarding gave us a name; plain "Dashboard" otherwise */
+function greetingFor(name: string | null): string {
+  if (!name) return 'Dashboard'
+  const hour = new Date().getHours()
+  const salutation = hour < 5 ? 'Still up' : hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
+  return `${salutation}, ${name.split(' ')[0]}`
+}
+
 function loadWidgets(): { id: WidgetId; visible: boolean }[] {
   try {
     const raw = localStorage.getItem(WIDGETS_KEY)
@@ -92,6 +111,7 @@ function loadWidgets(): { id: WidgetId; visible: boolean }[] {
 }
 
 export default function DashboardPage() {
+  const { preferredName, persona } = usePersonalization()
   const [data, setData] = useState<DashboardData | null>(null)
   const [bills, setBills] = useState<RecurringStream[]>([])
   const [goals, setGoals] = useState<Goal[]>([])
@@ -199,11 +219,13 @@ export default function DashboardPage() {
 
   if (!data) return null
 
+  const suggestion = persona ? PERSONA_SUGGESTIONS[persona] : null
+
   const hasAccounts = data.accounts.length > 0
   if (!hasAccounts) {
     return (
       <div className="space-y-6">
-        <h1 className="text-3xl font-semibold">Dashboard</h1>
+        <h1 className="text-3xl font-semibold">{greetingFor(preferredName)}</h1>
         <Card>
           <CardContent className="flex flex-col items-center gap-4 py-20 text-center">
             {connectingAccount ? (
@@ -235,6 +257,15 @@ export default function DashboardPage() {
                   onError={() => setConnectingAccount(false)}
                   onSuccess={() => fetchData(range).finally(() => setConnectingAccount(false))}
                 />
+                {suggestion && (
+                  <Link
+                    href={suggestion.href}
+                    className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                  >
+                    No bank needed yet — {suggestion.label}
+                    <ArrowRight className="size-3.5" />
+                  </Link>
+                )}
               </>
             )}
           </CardContent>
@@ -449,7 +480,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-semibold">Dashboard</h1>
+        <h1 className="text-3xl font-semibold">{greetingFor(preferredName)}</h1>
         <div className="flex items-center gap-2">
           <Tabs value={range} onValueChange={changeRange}>
             <TabsList className="h-8">

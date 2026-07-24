@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState, type SyntheticEvent } from 'react'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { Loader2 } from 'lucide-react'
+import { Check, Loader2, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { MIN_PASSWORD_LENGTH, PASSWORD_REQUIREMENTS, isStrongPassword } from '@/lib/password'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -56,8 +58,8 @@ export default function ResetPasswordPage() {
     e.preventDefault()
     setError(null)
 
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters')
+    if (!isStrongPassword(password)) {
+      setError('Password does not meet the requirements below')
       return
     }
     if (password !== confirmPassword) {
@@ -131,10 +133,29 @@ export default function ResetPasswordPage() {
               type="password"
               autoComplete="new-password"
               required
-              minLength={8}
+              minLength={MIN_PASSWORD_LENGTH}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            {password.length > 0 && (
+              <ul className="space-y-1">
+                {PASSWORD_REQUIREMENTS.map((req) => {
+                  const met = req.test(password)
+                  return (
+                    <li
+                      key={req.key}
+                      className={cn(
+                        'flex items-center gap-1 text-xs',
+                        met ? 'text-positive' : 'text-muted-foreground'
+                      )}
+                    >
+                      {met ? <Check className="size-3" /> : <X className="size-3" />}
+                      {req.label}
+                    </li>
+                  )
+                })}
+              </ul>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -144,10 +165,25 @@ export default function ResetPasswordPage() {
               type="password"
               autoComplete="new-password"
               required
-              minLength={8}
+              minLength={MIN_PASSWORD_LENGTH}
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
             />
+            {confirmPassword.length > 0 && (
+              <p
+                className={cn(
+                  'flex items-center gap-1 text-xs',
+                  password === confirmPassword ? 'text-positive' : 'text-destructive'
+                )}
+              >
+                {password === confirmPassword ? (
+                  <Check className="size-3" />
+                ) : (
+                  <X className="size-3" />
+                )}
+                {password === confirmPassword ? 'Passwords match' : 'Passwords do not match'}
+              </p>
+            )}
           </div>
 
           <Button type="submit" disabled={loading} className="h-10 w-full">

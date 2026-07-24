@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState, type SyntheticEvent } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
@@ -32,6 +33,7 @@ import { CSS } from '@dnd-kit/utilities'
 import type { Category, PlaidItemSummary, Profile, RuleWithCategory } from '@/lib/types'
 import { formatDate } from '@/lib/format'
 import { cn } from '@/lib/utils'
+import { FOCUS_AREAS, MAX_FOCUS } from '@/lib/focus-areas'
 import CategoryIcon from '@/components/CategoryIcon'
 import CategoryDialog, { NEW_GROUP } from '@/components/CategoryDialog'
 import RuleDialog from '@/components/RuleDialog'
@@ -70,14 +72,17 @@ type ThemeChoice = 'light' | 'dark' | 'system'
 export default function SettingsPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [fullName, setFullName] = useState('')
+  const [preferredName, setPreferredName] = useState('')
   const [currency, setCurrency] = useState('USD')
   const [originalName, setOriginalName] = useState('')
+  const [originalPreferredName, setOriginalPreferredName] = useState('')
   const [originalCurrency, setOriginalCurrency] = useState('USD')
   const [editingProfile, setEditingProfile] = useState(false)
   const [savingProfile, setSavingProfile] = useState(false)
   const [loading, setLoading] = useState(true)
 
   const [theme, setTheme] = useState<ThemeChoice>('system')
+  const [focusAreas, setFocusAreas] = useState<string[]>([])
   const [rules, setRules] = useState<RuleWithCategory[]>([])
   const [categories, setCategories] = useState<Category[]>([])
   const [institutions, setInstitutions] = useState<PlaidItemSummary[]>([])
@@ -97,9 +102,12 @@ export default function SettingsPage() {
     ])
       .then(([p, r, c, i]) => {
         setProfile(p)
+        setFocusAreas(p?.focus_areas ?? [])
         setFullName(p?.full_name ?? '')
+        setPreferredName(p?.preferred_name ?? '')
         setCurrency(p?.currency ?? 'USD')
         setOriginalName(p?.full_name ?? '')
+        setOriginalPreferredName(p?.preferred_name ?? '')
         setOriginalCurrency(p?.currency ?? 'USD')
         setRules(r.rules ?? [])
         setCategories(c.categories ?? [])
@@ -130,10 +138,39 @@ export default function SettingsPage() {
     } catch {}
   }
 
-  const profileDirty = fullName !== originalName || currency !== originalCurrency
+  /** Toggle a sidebar focus area and persist immediately — router.refresh()
+   *  re-renders the (dashboard) layout so the sidebar reorders on the spot. */
+  const toggleFocusArea = async (key: string) => {
+    const selected = focusAreas.includes(key)
+    if (!selected && focusAreas.length >= MAX_FOCUS) {
+      toast.info(`Up to ${MAX_FOCUS} — unpin one first`)
+      return
+    }
+    const previous = focusAreas
+    const next = selected ? focusAreas.filter((k) => k !== key) : [...focusAreas, key]
+    setFocusAreas(next)
+    try {
+      const response = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ focus_areas: next }),
+      })
+      if (!response.ok) throw new Error('failed')
+      router.refresh()
+    } catch {
+      setFocusAreas(previous)
+      toast.error('Failed to save sidebar layout')
+    }
+  }
+
+  const profileDirty =
+    fullName !== originalName ||
+    preferredName !== originalPreferredName ||
+    currency !== originalCurrency
 
   const cancelEditProfile = () => {
     setFullName(originalName)
+    setPreferredName(originalPreferredName)
     setCurrency(originalCurrency)
     setEditingProfile(false)
   }
@@ -146,10 +183,11 @@ export default function SettingsPage() {
       const response = await fetch('/api/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ full_name: fullName, currency }),
+        body: JSON.stringify({ full_name: fullName, preferred_name: preferredName, currency }),
       })
       if (!response.ok) throw new Error('failed')
       setOriginalName(fullName)
+      setOriginalPreferredName(preferredName)
       setOriginalCurrency(currency)
       setEditingProfile(false)
       toast.success('Profile saved')
@@ -297,15 +335,27 @@ export default function SettingsPage() {
             }
           >
             <form onSubmit={saveProfile} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="full-name">Name</Label>
-                <Input
-                  id="full-name"
-                  placeholder="Your name"
-                  value={fullName}
-                  disabled={!editingProfile}
-                  onChange={(e) => setFullName(e.target.value)}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="full-name">Name</Label>
+                  <Input
+                    id="full-name"
+                    placeholder="Your name"
+                    value={fullName}
+                    disabled={!editingProfile}
+                    onChange={(e) => setFullName(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="preferred-name">Goes by</Label>
+                  <Input
+                    id="preferred-name"
+                    placeholder="What we call you"
+                    value={preferredName}
+                    disabled={!editingProfile}
+                    onChange={(e) => setPreferredName(e.target.value)}
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -372,6 +422,57 @@ export default function SettingsPage() {
                 </Button>
               ))}
             </div>
+          </SettingsSection>
+
+          <SettingsSection title="Sidebar">
+            <p className="text-xs text-muted-foreground">
+              Pin up to {MAX_FOCUS} areas to the top of your sidebar — they appear in the
+              order you pick them, right under the Dashboard. The first two also take the
+              spare slots in the mobile tab bar.
+            </p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {FOCUS_AREAS.map((f) => {
+                const selected = focusAreas.includes(f.key)
+                const order = focusAreas.indexOf(f.key)
+                return (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => toggleFocusArea(f.key)}
+                    className={cn(
+                      'flex items-center gap-2.5 rounded-xl border p-3 text-left text-sm font-medium transition-colors',
+                      selected
+                        ? 'border-primary bg-primary/5 ring-2 ring-primary/30'
+                        : 'border-border hover:bg-accent',
+                      !selected && focusAreas.length >= MAX_FOCUS && 'opacity-50'
+                    )}
+                  >
+                    <f.icon
+                      className={cn(
+                        'size-4.5 shrink-0',
+                        selected ? 'text-primary' : 'text-muted-foreground'
+                      )}
+                    />
+                    <span className="flex-1">{f.label}</span>
+                    {selected && (
+                      <span className="flex size-5 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground">
+                        {order + 1}
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </SettingsSection>
+
+          <SettingsSection title="Legal">
+            <p className="text-sm text-muted-foreground">
+              The{' '}
+              <Link href="/terms" target="_blank" className="font-medium text-primary hover:underline">
+                Terms &amp; Conditions
+              </Link>{' '}
+              you accepted govern your use of Fortuneer.
+            </p>
           </SettingsSection>
 
           <SettingsSection title="Danger zone">

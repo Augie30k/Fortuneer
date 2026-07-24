@@ -39,7 +39,7 @@ export default function LoginPage() {
   }
 
   return (
-    <Card>
+    <Card className="animate-[ft-form-in_0.45s_ease-out_both]">
       <CardHeader>
         <CardTitle className="text-2xl font-semibold">Welcome back</CardTitle>
         <CardDescription>Sign in to your Fortuneer account</CardDescription>
@@ -93,6 +93,12 @@ export default function LoginPage() {
           Don&apos;t have an account?{' '}
           <Link href="/signup" className="font-medium text-primary hover:underline">
             Sign up
+          </Link>
+        </p>
+        <p className="mt-3 text-center text-xs text-muted-foreground">
+          By signing in you agree to the{' '}
+          <Link href="/terms" className="underline underline-offset-2 hover:text-foreground">
+            Terms &amp; Conditions
           </Link>
         </p>
       </CardContent>
